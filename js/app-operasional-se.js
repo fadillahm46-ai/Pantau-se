@@ -77,8 +77,10 @@ let pendingOpsLiftingUpload = [];
 let opsLtWtSortState = { key: null, dir: 'none' };
 let opsLiftingSortState = { key: null, dir: 'none' };
 let opsLtWtPage = 1;
+let opsLtWtPageSize = 50;
 let opsLtWtLastSig = '';
 let opsLiftingPage = 1;
+let opsLiftingPageSize = 50;
 let opsLiftingLastSig = '';
 let opsStateInitialized = false;
 
@@ -356,17 +358,18 @@ function renderOpsLtWtTable() {
         return;
     }
 
+    const effSize = resolveEffectivePageSize(opsLtWtPageSize, rows.length);
     const sig = `${query}|${jobFilter}|${shiftFilter}|${statusFilter}|${opsLtWtSortState.key}|${opsLtWtSortState.dir}|${rows.length}`;
     if (sig !== opsLtWtLastSig) {
         opsLtWtPage = 1;
         opsLtWtLastSig = sig;
     }
-    const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(rows.length / effSize));
     if (opsLtWtPage > totalPages) opsLtWtPage = totalPages;
     if (opsLtWtPage < 1) opsLtWtPage = 1;
 
-    const startIdx = (opsLtWtPage - 1) * TABLE_PAGE_SIZE;
-    const pageRows = rows.length > TABLE_PAGE_SIZE ? rows.slice(startIdx, startIdx + TABLE_PAGE_SIZE) : rows;
+    const startIdx = (opsLtWtPage - 1) * effSize;
+    const pageRows = rows.length > effSize ? rows.slice(startIdx, startIdx + effSize) : rows;
 
     tbody.innerHTML = pageRows.map((r, idx) => {
         const globalNo = startIdx + idx + 1;
@@ -404,11 +407,17 @@ function renderOpsLtWtTable() {
     }).join('');
 
     if (tableEl) {
-        renderSharedPaginationBar(tableEl, rows.length, opsLtWtPage, TABLE_PAGE_SIZE, (nextPage) => {
+        renderSharedPaginationBar(tableEl, rows.length, opsLtWtPage, opsLtWtPageSize, (nextPage) => {
             opsLtWtPage = nextPage;
             renderOpsLtWtTable();
             scrollTableContainerTop(tableEl);
+        }, (nextSize) => {
+            opsLtWtPageSize = nextSize;
+            opsLtWtPage = 1;
+            renderOpsLtWtTable();
+            scrollTableContainerTop(tableEl);
         });
+        if (typeof syncBulkCheckboxesState === 'function') syncBulkCheckboxesState(tableEl);
     }
 }
 
@@ -730,17 +739,18 @@ function renderOpsLiftingTable() {
         return;
     }
 
+    const effSize = resolveEffectivePageSize(opsLiftingPageSize, rows.length);
     const sig = `${query}|${katFilter}|${shiftFilter}|${statusFilter}|${opsLiftingSortState.key}|${opsLiftingSortState.dir}|${rows.length}`;
     if (sig !== opsLiftingLastSig) {
         opsLiftingPage = 1;
         opsLiftingLastSig = sig;
     }
-    const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(rows.length / effSize));
     if (opsLiftingPage > totalPages) opsLiftingPage = totalPages;
     if (opsLiftingPage < 1) opsLiftingPage = 1;
 
-    const startIdx = (opsLiftingPage - 1) * TABLE_PAGE_SIZE;
-    const pageRows = rows.length > TABLE_PAGE_SIZE ? rows.slice(startIdx, startIdx + TABLE_PAGE_SIZE) : rows;
+    const startIdx = (opsLiftingPage - 1) * effSize;
+    const pageRows = rows.length > effSize ? rows.slice(startIdx, startIdx + effSize) : rows;
 
     tbody.innerHTML = pageRows.map((r, idx) => {
         const globalNo = startIdx + idx + 1;
@@ -783,11 +793,17 @@ function renderOpsLiftingTable() {
     }).join('');
 
     if (tableEl) {
-        renderSharedPaginationBar(tableEl, rows.length, opsLiftingPage, TABLE_PAGE_SIZE, (nextPage) => {
+        renderSharedPaginationBar(tableEl, rows.length, opsLiftingPage, opsLiftingPageSize, (nextPage) => {
             opsLiftingPage = nextPage;
             renderOpsLiftingTable();
             scrollTableContainerTop(tableEl);
+        }, (nextSize) => {
+            opsLiftingPageSize = nextSize;
+            opsLiftingPage = 1;
+            renderOpsLiftingTable();
+            scrollTableContainerTop(tableEl);
         });
+        if (typeof syncBulkCheckboxesState === 'function') syncBulkCheckboxesState(tableEl);
     }
 }
 
@@ -1076,21 +1092,41 @@ function buildCompactPageList(currentPage, totalPages) {
     return pages;
 }
 
-function renderSharedPaginationBar(tableEl, totalItems, currentPage, pageSize, onPageChange) {
+function resolveEffectivePageSize(rawPageSize, totalItems) {
+    if (rawPageSize === 'all') return Math.max(1, totalItems);
+    const num = parseInt(rawPageSize, 10);
+    if (isNaN(num) || num <= 0) return TABLE_PAGE_SIZE;
+    return num;
+}
+
+function buildDynamicPageSizeOptions(totalItems) {
+    const steps = [50, 100, 200, 500];
+    const opts = [];
+    steps.forEach((n) => {
+        if (n === TABLE_PAGE_SIZE || totalItems > n) {
+            opts.push({ value: String(n), label: `Tampilkan ${n}` });
+        }
+    });
+    opts.push({ value: 'all', label: `Tampilkan Semua (${totalItems.toLocaleString('id-ID')})` });
+    return opts;
+}
+
+function renderSharedPaginationBar(tableEl, totalItems, currentPage, pageSize, onPageChange, onPageSizeChange) {
     const host = getOrCreatePaginationHost(tableEl);
     if (!host) return;
 
-    if (totalItems <= pageSize) {
+    if (totalItems <= TABLE_PAGE_SIZE) {
         host.classList.add('hidden');
         host.classList.remove('flex');
         host.innerHTML = '';
         return;
     }
 
-    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const effPageSize = resolveEffectivePageSize(pageSize, totalItems);
+    const totalPages = Math.max(1, Math.ceil(totalItems / effPageSize));
     const safePage = Math.min(Math.max(1, currentPage), totalPages);
-    const startNum = (safePage - 1) * pageSize + 1;
-    const endNum = Math.min(totalItems, safePage * pageSize);
+    const startNum = (safePage - 1) * effPageSize + 1;
+    const endNum = Math.min(totalItems, safePage * effPageSize);
     const pageList = buildCompactPageList(safePage, totalPages);
 
     const navBtnBase = 'px-2 py-1 rounded-lg border border-gray-200 bg-white text-[10.5px] font-semibold text-gray-700 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-colors';
@@ -1106,8 +1142,20 @@ function renderSharedPaginationBar(tableEl, totalItems, currentPage, pageSize, o
         return `<button type="button" data-page-target="${p}" class="${cls}">${p}</button>`;
     }).join('');
 
-    const jumpSelectHtml = totalPages > 5
-        ? `<select data-page-jump="1" aria-label="Pilih halaman" class="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[10.5px] font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500">${Array.from({ length: totalPages }, (_, i) => `<option value="${i + 1}"${i + 1 === safePage ? ' selected' : ''}>Hal. ${i + 1}/${totalPages}</option>`).join('')}</select>`
+    const sizeOpts = buildDynamicPageSizeOptions(totalItems);
+    const rawSizeStr = pageSize === 'all' ? 'all' : String(effPageSize);
+    const selectedSizeVal = sizeOpts.some(o => o.value === rawSizeStr) ? rawSizeStr : 'all';
+
+    const pageSizeSelectHtml = typeof onPageSizeChange === 'function'
+        ? `<select data-page-size-select="1" aria-label="Jumlah baris ditampilkan" class="${totalPages > 1 ? 'ml-1 ' : ''}rounded-lg border border-gray-200 bg-white px-2 py-1 text-[10.5px] font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500">${sizeOpts.map(o => `<option value="${o.value}"${o.value === selectedSizeVal ? ' selected' : ''}>${o.label}</option>`).join('')}</select>`
+        : '';
+
+    const navControlsHtml = totalPages > 1
+        ? `<button type="button" data-page-target="1" ${safePage <= 1 ? 'disabled' : ''} title="Halaman Pertama" class="${navBtnBase}"><i class="fa-solid fa-angles-left text-[9px]"></i></button>
+           <button type="button" data-page-target="${safePage - 1}" ${safePage <= 1 ? 'disabled' : ''} class="${navBtnBase}">Prev</button>
+           ${pageButtonsHtml}
+           <button type="button" data-page-target="${safePage + 1}" ${safePage >= totalPages ? 'disabled' : ''} class="${navBtnBase}">Next</button>
+           <button type="button" data-page-target="${totalPages}" ${safePage >= totalPages ? 'disabled' : ''} title="Halaman Terakhir" class="${navBtnBase}"><i class="fa-solid fa-angles-right text-[9px]"></i></button>`
         : '';
 
     host.classList.remove('hidden');
@@ -1117,12 +1165,8 @@ function renderSharedPaginationBar(tableEl, totalItems, currentPage, pageSize, o
             Menampilkan <strong class="text-gray-800 font-mono">${startNum.toLocaleString('id-ID')}–${endNum.toLocaleString('id-ID')}</strong> dari <strong class="text-gray-800 font-mono">${totalItems.toLocaleString('id-ID')}</strong> baris
         </div>
         <div class="flex flex-wrap items-center gap-1">
-            <button type="button" data-page-target="1" ${safePage <= 1 ? 'disabled' : ''} title="Halaman Pertama" class="${navBtnBase}"><i class="fa-solid fa-angles-left text-[9px]"></i></button>
-            <button type="button" data-page-target="${safePage - 1}" ${safePage <= 1 ? 'disabled' : ''} class="${navBtnBase}">Prev</button>
-            ${pageButtonsHtml}
-            <button type="button" data-page-target="${safePage + 1}" ${safePage >= totalPages ? 'disabled' : ''} class="${navBtnBase}">Next</button>
-            <button type="button" data-page-target="${totalPages}" ${safePage >= totalPages ? 'disabled' : ''} title="Halaman Terakhir" class="${navBtnBase}"><i class="fa-solid fa-angles-right text-[9px]"></i></button>
-            ${jumpSelectHtml}
+            ${navControlsHtml}
+            ${pageSizeSelectHtml}
         </div>
     `;
 
@@ -1135,12 +1179,12 @@ function renderSharedPaginationBar(tableEl, totalItems, currentPage, pageSize, o
         });
     });
 
-    const jumpSel = host.querySelector('select[data-page-jump]');
-    if (jumpSel) {
-        jumpSel.addEventListener('change', () => {
-            const target = parseInt(jumpSel.value, 10);
-            if (!isNaN(target) && target >= 1 && target <= totalPages && target !== safePage) {
-                onPageChange(target);
+    const sizeSel = host.querySelector('select[data-page-size-select]');
+    if (sizeSel && typeof onPageSizeChange === 'function') {
+        sizeSel.addEventListener('change', () => {
+            const nextVal = sizeSel.value === 'all' ? 'all' : parseInt(sizeSel.value, 10);
+            if (nextVal === 'all' || (!isNaN(nextVal) && nextVal > 0)) {
+                onPageSizeChange(nextVal);
             }
         });
     }
@@ -1183,7 +1227,7 @@ function applyUniversalPaginationToTbody(tbody, resetIfCountChanged = false) {
 
     let state = universalTablePageState.get(tbody);
     if (!state) {
-        state = { page: 1, lastCount: totalItems };
+        state = { page: 1, pageSize: TABLE_PAGE_SIZE, lastCount: totalItems };
         universalTablePageState.set(tbody, state);
     }
     if (resetIfCountChanged && state.lastCount !== totalItems) {
@@ -1191,25 +1235,32 @@ function applyUniversalPaginationToTbody(tbody, resetIfCountChanged = false) {
         state.lastCount = totalItems;
     }
 
-    const totalPages = Math.max(1, Math.ceil(totalItems / TABLE_PAGE_SIZE));
-    if (state.page > totalPages) state.page = totalPages;
-    if (state.page < 1) state.page = 1;
-
     if (totalItems <= TABLE_PAGE_SIZE) {
         groups.forEach(chunk => chunk.forEach(tr => tr.classList.remove('hidden')));
-        renderSharedPaginationBar(tableEl, totalItems, 1, TABLE_PAGE_SIZE, () => { });
+        renderSharedPaginationBar(tableEl, totalItems, 1, state.pageSize, () => { });
         return;
     }
 
-    const startIdx = (state.page - 1) * TABLE_PAGE_SIZE;
-    const endIdx = startIdx + TABLE_PAGE_SIZE;
+    const effPageSize = resolveEffectivePageSize(state.pageSize, totalItems);
+    const totalPages = Math.max(1, Math.ceil(totalItems / effPageSize));
+    if (state.page > totalPages) state.page = totalPages;
+    if (state.page < 1) state.page = 1;
+
+    const startIdx = (state.page - 1) * effPageSize;
+    const endIdx = startIdx + effPageSize;
     groups.forEach((chunk, idx) => {
         const show = idx >= startIdx && idx < endIdx;
         chunk.forEach(tr => tr.classList.toggle('hidden', !show));
     });
 
-    renderSharedPaginationBar(tableEl, totalItems, state.page, TABLE_PAGE_SIZE, (nextPage) => {
+    renderSharedPaginationBar(tableEl, totalItems, state.page, state.pageSize, (nextPage) => {
         state.page = nextPage;
+        applyUniversalPaginationToTbody(tbody, false);
+        if (typeof syncBulkCheckboxesState === 'function') syncBulkCheckboxesState(tableEl);
+        scrollTableContainerTop(tableEl);
+    }, (nextSize) => {
+        state.pageSize = nextSize;
+        state.page = 1;
         applyUniversalPaginationToTbody(tbody, false);
         if (typeof syncBulkCheckboxesState === 'function') syncBulkCheckboxesState(tableEl);
         scrollTableContainerTop(tableEl);
