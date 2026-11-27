@@ -1,0 +1,45 @@
+{
+  "name": "PANTAU SE — Support Equipment Hub",
+  "short_name": "PANTAU SE",
+  "description": "Aplikasi monitoring Support Equipment: Manpower, ATR & Punishment, KPI Pengawas, Utilitas & Operasi Unit, Operasional SE (Lubetruck/Watertruck & Lifting), dan Roster SE.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F7F4EF",
+  "theme_color": "#1B7361",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
