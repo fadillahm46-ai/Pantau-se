@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -260,10 +260,12 @@
          * MOBILE MINIMALIST TOOLBAR: PANAH > AKSI (ICON-ONLY) & FILTER SLIDE
          * =================================================================== */
         @media (min-width: 1024px) {
+
             .mob-act-toggle,
             .mob-flt-trigger {
                 display: none !important;
             }
+
             .mob-act-tray {
                 display: inline-flex;
                 flex-wrap: wrap;
@@ -280,9 +282,11 @@
                 position: relative;
                 flex-shrink: 0;
             }
+
             .mob-act-wrap.mob-act-empty {
                 display: none !important;
             }
+
             .mob-act-toggle {
                 width: 32px;
                 height: 32px;
@@ -299,21 +303,26 @@
                 cursor: pointer;
                 flex-shrink: 0;
             }
+
             .mob-act-toggle:active {
                 transform: scale(0.94);
             }
+
             .mob-act-wrap.is-open .mob-act-toggle {
                 background: #F0FDFA;
                 color: #0F766E;
                 border-color: #99F6E4;
                 box-shadow: none;
             }
+
             .mob-act-chevron {
                 transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
             }
+
             .mob-act-wrap.is-open .mob-act-chevron {
                 transform: rotate(180deg);
             }
+
             .mob-act-tray {
                 display: inline-flex;
                 align-items: center;
@@ -329,6 +338,7 @@
                     transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
                     margin-left 210ms ease;
             }
+
             .mob-act-wrap.is-open .mob-act-tray {
                 max-width: 280px;
                 opacity: 1;
@@ -338,7 +348,8 @@
                 gap: 0.375rem;
                 margin-left: 0.375rem;
             }
-            .mob-act-tray > button {
+
+            .mob-act-tray>button {
                 width: 34px !important;
                 height: 34px !important;
                 min-width: 34px !important;
@@ -354,25 +365,42 @@
                 opacity: 0;
                 transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
             }
-            .mob-act-tray > button.hidden {
+
+            .mob-act-tray>button.hidden {
                 display: none !important;
             }
-            .mob-act-wrap.is-open .mob-act-tray > button {
+
+            .mob-act-wrap.is-open .mob-act-tray>button {
                 transform: translateX(0) scale(1);
                 opacity: 1;
             }
-            .mob-act-wrap.is-open .mob-act-tray > button:nth-child(1) { transition-delay: 0ms; }
-            .mob-act-wrap.is-open .mob-act-tray > button:nth-child(2) { transition-delay: 45ms; }
-            .mob-act-wrap.is-open .mob-act-tray > button:nth-child(3) { transition-delay: 90ms; }
-            .mob-act-wrap.is-open .mob-act-tray > button:nth-child(4) { transition-delay: 135ms; }
-            .mob-act-tray > button > i {
+
+            .mob-act-wrap.is-open .mob-act-tray>button:nth-child(1) {
+                transition-delay: 0ms;
+            }
+
+            .mob-act-wrap.is-open .mob-act-tray>button:nth-child(2) {
+                transition-delay: 45ms;
+            }
+
+            .mob-act-wrap.is-open .mob-act-tray>button:nth-child(3) {
+                transition-delay: 90ms;
+            }
+
+            .mob-act-wrap.is-open .mob-act-tray>button:nth-child(4) {
+                transition-delay: 135ms;
+            }
+
+            .mob-act-tray>button>i {
                 font-size: 13px !important;
                 margin: 0 !important;
             }
-            .mob-act-tray > button > span:not([data-mob-keep-badge="1"]) {
+
+            .mob-act-tray>button>span:not([data-mob-keep-badge="1"]) {
                 display: none !important;
             }
-            .mob-act-tray > button > span[data-mob-keep-badge="1"] {
+
+            .mob-act-tray>button>span[data-mob-keep-badge="1"] {
                 position: absolute !important;
                 top: -4px !important;
                 right: -4px !important;
@@ -389,19 +417,24 @@
             .mob-flt-hidden-mobile {
                 display: none !important;
             }
+
             #mob-filter-sheet-body .mob-flt-hidden-mobile {
                 display: block !important;
             }
+
             #mob-filter-sheet-body .mob-flt-hidden-mobile.mob-flt-period-box {
                 display: inline-flex !important;
             }
+
             #mob-filter-sheet-body .mob-flt-hidden-mobile.mob-flt-inline-btn {
                 display: inline-flex !important;
             }
+
             #mob-filter-sheet-body .hidden,
             .mob-flt-field.is-hidden-ctrl {
                 display: none !important;
             }
+
             #mob-filter-sheet-body select,
             #mob-filter-sheet-body input[type="date"] {
                 width: 100% !important;
@@ -414,12 +447,14 @@
                 border: 1px solid #D1D5DB !important;
                 color: #1F2937 !important;
             }
+
             #mob-filter-sheet-body .mob-flt-period-box {
                 width: 100% !important;
                 justify-content: space-between !important;
                 background-color: #FFFFFF !important;
                 padding: 0.35rem !important;
             }
+
             #mob-filter-sheet-body .mob-flt-period-box select {
                 width: auto !important;
                 flex: 1 1 auto !important;
@@ -427,6 +462,7 @@
                 padding: 0.35rem 0.25rem !important;
                 background-color: transparent !important;
             }
+
             #mob-filter-sheet-body button.mob-flt-inline-btn {
                 width: 100% !important;
                 justify-content: center !important;
@@ -720,12 +756,12 @@
                     <!-- Brand Icon on Mobile Only -->
                     <img src="https://lh3.googleusercontent.com/d/1_KcyfAgnSHAVqitfBtZO0gvi_aUNW65F"
                         onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='icons/favicon.png';}"
-                        alt="PANTAU SE"
-                        class="lg:hidden h-6 w-auto max-w-[34px] object-contain shrink-0 select-none">
+                        alt="PANTAU SE" class="lg:hidden h-6 w-auto max-w-[34px] object-contain shrink-0 select-none">
                     <span class="lg:hidden h-4 w-px bg-gray-300/80 shrink-0"></span>
                     <div class="min-w-0">
                         <h2 id="header-page-title"
-                            class="text-sm sm:text-base lg:text-lg font-bold text-gray-800 truncate leading-tight">Dashboard — KPI
+                            class="text-sm sm:text-base lg:text-lg font-bold text-gray-800 truncate leading-tight">
+                            Dashboard — KPI
                             SE</h2>
                     </div>
                 </div>
@@ -986,15 +1022,18 @@
                                                     BIB</span>
                                                 <i class="fa-solid fa-user-plus text-sky-500 text-xs"></i>
                                             </div>
-                                            <p id="overview-bib-count" class="text-xl font-extrabold text-gray-800">0</p>
-                                            <span class="text-[8px] text-gray-500 font-medium">Rental &amp; WO Lifting</span>
+                                            <p id="overview-bib-count" class="text-xl font-extrabold text-gray-800">0
+                                            </p>
+                                            <span class="text-[8px] text-gray-500 font-medium">Rental &amp; WO
+                                                Lifting</span>
                                         </div>
                                         <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100">
                                             <div class="flex items-center justify-between text-gray-400 mb-1">
                                                 <span class="text-[8px] font-semibold text-gray-500">Unit Standby</span>
                                                 <i class="fa-solid fa-circle-pause text-amber-500 text-xs"></i>
                                             </div>
-                                            <p id="overview-standby-count" class="text-xl font-extrabold text-gray-800">0</p>
+                                            <p id="overview-standby-count" class="text-xl font-extrabold text-gray-800">
+                                                0</p>
                                             <span class="text-[8px] text-gray-500 font-medium">Siap operasi</span>
                                         </div>
                                         <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100">

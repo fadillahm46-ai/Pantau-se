@@ -6,7 +6,7 @@
  * - Stale-While-Revalidate untuk aset statis / CDN agar tetap responsif saat koneksi lemah
  */
 
-const CACHE_VERSION = 'v1.0.20';
+const CACHE_VERSION = 'v1.0.22';
 const SHELL_CACHE = `pantau-se-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `pantau-se-runtime-${CACHE_VERSION}`;
 
