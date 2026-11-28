@@ -3967,6 +3967,7 @@ function toggleInfoLike(infoId) {
     if (idx >= 0) item.likes.splice(idx, 1);
     else item.likes.push(key);
     renderInformasiSection();
+    if (typeof schedulePatchInformasiSocial === 'function') schedulePatchInformasiSocial(item);
 }
 
 function toggleInfoEmojiPicker(infoId, event) {
@@ -3998,6 +3999,7 @@ function toggleInfoEmojiReaction(infoId, emoji) {
     }
     openInfoEmojiPickerId = null;
     renderInformasiSection();
+    if (typeof schedulePatchInformasiSocial === 'function') schedulePatchInformasiSocial(item);
 }
 
 function extractFirstEmojiToken(rawStr) {
@@ -4075,6 +4077,7 @@ async function shareInformasiPost(infoId) {
             await navigator.share({ title: shareTitle, text: `${shareTitle}\n${item.deskripsi}`, url: shareUrl });
             item.shares += 1;
             renderInformasiSection();
+            if (typeof schedulePatchInformasiSocial === 'function') schedulePatchInformasiSocial(item);
             showToast('Postingan berhasil dibagikan.', 'success');
             return;
         }
@@ -4095,6 +4098,7 @@ async function shareInformasiPost(infoId) {
 
     item.shares += 1;
     renderInformasiSection();
+    if (typeof schedulePatchInformasiSocial === 'function') schedulePatchInformasiSocial(item);
     showToast(
         copied ? 'Link & isi postingan berhasil disalin — siap dibagikan!' : 'Siap dibagikan.',
         copied ? 'success' : 'info'
@@ -4647,6 +4651,12 @@ function renderInformasiSection() {
                                                 <i class="fa-solid ${cooldownIcon} text-[6.5px]"></i>
                                                 <span>${escapeHtml(cooldownText)}</span>
                                             </span>
+                                            ${(item._pendingSync || Number(item.id) >= 1e12) ? `
+                                                <button type="button" onclick="if(typeof syncBerandaFromSupabase==='function'){syncBerandaFromSupabase({deltaOnly:false});}" title="Belum tersinkron ke server — klik untuk kirim ulang" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7.5px] leading-tight font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100">
+                                                    <i class="fa-solid fa-cloud-arrow-up text-[6.5px]"></i>
+                                                    <span>Menunggu Sinkron</span>
+                                                </button>
+                                            ` : ''}
                                         </div>
                                     </div>
 
@@ -4726,15 +4736,18 @@ function submitInfoComment(event, infoId) {
     if (!text) return;
 
     if (!Array.isArray(item.comments)) item.comments = [];
-    item.comments.push({
+    const commentObj = {
         id: Date.now(),
         authorKey: profile.key,
         authorName: profile.nama,
         authorRole: profile.jabatan,
         authorType: profile.type,
         text,
-        timeLabel: formatNowWitaLabel().replace('Hari ini, ', '')
-    });
+        timeLabel: formatNowWitaLabel().replace('Hari ini, ', ''),
+        _pendingSync: true
+    };
+    item.comments.push(commentObj);
+    if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
 
     if (profile.type !== 'admin' && getInfoCooldownMs(item) > 0) {
         infoCommentCooldowns[`${infoId}::${profile.key}`] = Date.now();
@@ -4744,6 +4757,17 @@ function submitInfoComment(event, infoId) {
     renderInformasiSection();
     const nextInput = document.getElementById(`info-comment-input-${infoId}`);
     if (nextInput) nextInput.focus();
+
+    // Kirim realtime ke Supabase + Broadcast ke seluruh audiens online
+    if (typeof pushInformasiCommentToSupabase === 'function') {
+        pushInformasiCommentToSupabase(item.id, commentObj).then((saved) => {
+            if (saved && saved.id) {
+                commentObj.id = Number(saved.id);
+                delete commentObj._pendingSync;
+                if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
+            }
+        }).catch(() => {});
+    }
 }
 
 function deleteInfoComment(infoId, commentId) {
@@ -4751,10 +4775,14 @@ function deleteInfoComment(infoId, commentId) {
         showToast('Hanya Admin yang dapat menghapus komentar.', 'error');
         return;
     }
-    const item = informasiState.find(i => i.id === infoId);
+    const item = informasiState.find(i => Number(i.id) === Number(infoId));
     if (!item || !Array.isArray(item.comments)) return;
-    item.comments = item.comments.filter(c => c.id !== commentId);
+    item.comments = item.comments.filter(c => Number(c.id) !== Number(commentId));
+    if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
     renderInformasiSection();
+    if (typeof deleteInformasiCommentFromSupabase === 'function') {
+        deleteInformasiCommentFromSupabase(infoId, commentId);
+    }
     showToast('Komentar dihapus oleh Admin.', 'success');
 }
 
@@ -4898,7 +4926,7 @@ function closeInformasiModal() {
     }
 }
 
-function handleInformasiSubmit(event) {
+async function handleInformasiSubmit(event) {
     event.preventDefault();
     const profile = getActiveUserProfile();
     const isAdmin = profile.type === 'admin';
@@ -4908,8 +4936,8 @@ function handleInformasiSubmit(event) {
         showToast('Hanya Admin yang dapat menambahkan informasi baru.', 'error');
         return;
     }
-    if (editId && !isAdmin && profile.type !== 'gl') {
-        showToast('Hanya Admin atau Group Leader yang dapat mengedit informasi.', 'error');
+    if (editId && !isAdmin && profile.type !== 'gl' && profile.type !== 'section') {
+        showToast('Hanya Admin, Section, atau Group Leader yang dapat mengedit informasi.', 'error');
         return;
     }
 
@@ -4920,6 +4948,11 @@ function handleInformasiSubmit(event) {
     const audiens = Array.from(document.querySelectorAll('.info-audience-checkbox'))
         .filter(cb => cb.checked)
         .map(cb => cb.value);
+
+    if (!judul || !deskripsi) {
+        showToast('Judul dan deskripsi informasi wajib diisi.', 'error');
+        return;
+    }
 
     if (isAdmin && !audiensAll && audiens.length === 0) {
         showToast('Pilih "Semua Karyawan" atau minimal satu jabatan audiens.', 'error');
@@ -4938,46 +4971,106 @@ function handleInformasiSubmit(event) {
     const rawCooldown = Math.max(0, parseInt(document.getElementById('info-cooldown-value').value, 10) || 0);
     const chatCooldownUnit = document.getElementById('info-cooldown-unit').value === 'hours' ? 'hours' : 'minutes';
 
-    if (editId) {
-        const target = informasiState.find(i => i.id === editId);
-        if (!target) return;
-        target.kategori = kategori;
-        target.judul = judul;
-        target.deskripsi = deskripsi;
-        target.links = links;
-        target.editedBy = `${profile.nama} (${profile.type === 'admin' ? 'Admin' : (profile.type === 'section' ? 'Section' : 'GL')})`;
-        if (isAdmin) {
-            target.audiensAll = audiensAll;
-            target.audiens = audiensAll ? [] : audiens;
-            target.chatEnabled = chatEnabled;
-            target.chatCooldownValue = rawCooldown;
-            target.chatCooldownUnit = chatCooldownUnit;
-        }
-        showToast('Informasi berhasil diperbarui.', 'success');
-    } else {
-        const newId = Date.now();
-        informasiState.unshift({
-            id: newId,
-            kategori,
-            judul,
-            deskripsi,
-            audiensAll,
-            audiens: audiensAll ? [] : audiens,
-            links,
-            chatEnabled,
-            chatCooldownValue: rawCooldown,
-            chatCooldownUnit,
-            createdBy: profile.nama,
-            createdAtLabel: formatNowWitaLabel(),
-            editedBy: '',
-            comments: []
-        });
-        expandedInfoCommentIds.add(newId);
-        showToast('Informasi baru berhasil dibagikan ke audiens.', 'success');
+    const submitBtn = document.querySelector('#form-informasi button[type="submit"]');
+    const submitLbl = document.getElementById('btn-submit-info-text');
+    const prevLblText = submitLbl ? submitLbl.textContent : '';
+    if (submitBtn) {
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
     }
+    if (submitLbl) submitLbl.textContent = 'Menyimpan...';
 
-    closeInformasiModal();
-    renderInformasiSection();
+    try {
+        if (editId) {
+            const target = informasiState.find(i => Number(i.id) === editId);
+            if (!target) return;
+            target.kategori = kategori;
+            target.judul = judul;
+            target.deskripsi = deskripsi;
+            target.links = links;
+            target.editedBy = `${profile.nama} (${profile.type === 'admin' ? 'Admin' : (profile.type === 'section' ? 'Section' : 'GL')})`;
+            if (isAdmin) {
+                target.audiensAll = audiensAll;
+                target.audiens = audiensAll ? [] : audiens;
+                target.chatEnabled = chatEnabled;
+                target.chatCooldownValue = rawCooldown;
+                target.chatCooldownUnit = chatCooldownUnit;
+            }
+            target._pendingSync = true;
+            target._pendingAction = Number(target.id) >= 1e12 ? 'insert' : 'update';
+            if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
+
+            if (typeof pushInformasiPostToSupabase === 'function' && typeof isSupabaseConfigured === 'function' && isSupabaseConfigured()) {
+                try {
+                    await pushInformasiPostToSupabase(target, Number(target.id) >= 1e12, { throwOnError: true });
+                    showToast('Informasi berhasil diperbarui & tersimpan di server.', 'success');
+                } catch (err) {
+                    showToast(`Perubahan tersimpan lokal (gagal kirim ke server: ${err?.message || 'koneksi terganggu'}). Akan dicoba ulang otomatis.`, 'error');
+                }
+            } else {
+                showToast('Informasi berhasil diperbarui (tersimpan lokal).', 'success');
+            }
+        } else {
+            const tempId = Date.now();
+            const newItem = {
+                id: tempId,
+                kategori,
+                judul,
+                deskripsi,
+                audiensAll,
+                audiens: audiensAll ? [] : audiens,
+                links,
+                chatEnabled,
+                chatCooldownValue: rawCooldown,
+                chatCooldownUnit,
+                createdBy: profile.nama,
+                createdAtLabel: formatNowWitaLabel(),
+                editedBy: '',
+                likes: [],
+                reactions: {},
+                shares: 0,
+                comments: [],
+                _pendingSync: true,
+                _pendingAction: 'insert'
+            };
+            informasiState.unshift(newItem);
+            expandedInfoCommentIds.add(tempId);
+            if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
+            renderInformasiSection();
+
+            if (typeof pushInformasiPostToSupabase === 'function' && typeof isSupabaseConfigured === 'function' && isSupabaseConfigured()) {
+                try {
+                    const saved = await pushInformasiPostToSupabase(newItem, true, { throwOnError: true });
+                    if (saved && saved.id) {
+                        const realId = Number(saved.id);
+                        newItem.id = realId;
+                        expandedInfoCommentIds.delete(tempId);
+                        expandedInfoCommentIds.add(realId);
+                        if (Number(activeInfoChatId) === Number(tempId)) {
+                            activeInfoChatId = realId;
+                        }
+                        const readSet = getReadInformasiIdSet();
+                        readSet.add(String(realId));
+                        saveReadInformasiIdSet(readSet);
+                        if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
+                        showToast('Informasi baru berhasil disimpan & dikirim realtime ke seluruh audiens.', 'success');
+                    } else {
+                        showToast('Informasi tersimpan lokal — respon server kosong, akan otomatis disinkronkan ulang.', 'info');
+                    }
+                } catch (err) {
+                    showToast(`Informasi tersimpan di perangkat (gagal kirim ke server: ${err?.message || 'koneksi terganggu'}). Otomatis dicoba ulang saat refresh/online.`, 'error');
+                }
+            } else {
+                showToast('Informasi baru berhasil disimpan secara lokal.', 'success');
+            }
+        }
+
+        closeInformasiModal();
+        renderInformasiSection();
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitLbl && prevLblText) submitLbl.textContent = prevLblText;
+    }
 }
 
 function confirmDeleteInformasi(infoId) {
@@ -4985,16 +5078,20 @@ function confirmDeleteInformasi(infoId) {
         showToast('Hanya Admin yang dapat menghapus informasi.', 'error');
         return;
     }
-    const item = informasiState.find(i => i.id === infoId);
+    const item = informasiState.find(i => Number(i.id) === Number(infoId));
     if (!item) return;
     openConfirmDeleteModal({
         title: 'Hapus Informasi?',
         message: `Informasi "${item.judul}" beserta seluruh komentarnya akan dihapus.`,
         confirmText: 'Ya, Hapus',
         onConfirm: () => {
-            informasiState = informasiState.filter(i => i.id !== infoId);
+            informasiState = informasiState.filter(i => Number(i.id) !== Number(infoId));
             expandedInfoCommentIds.delete(infoId);
             if (Number(activeInfoChatId) === Number(infoId)) activeInfoChatId = null;
+            if (typeof persistBerandaCacheNow === 'function') persistBerandaCacheNow();
+            if (typeof deleteInformasiPostFromSupabase === 'function') {
+                deleteInformasiPostFromSupabase(infoId);
+            }
             closeInformasiModal();
             renderInformasiSection();
             showToast('Informasi berhasil dihapus.', 'success');
@@ -5747,11 +5844,14 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleHmUaUploadTargetFields();
     initCharts();
 
-    // Muat Master Data + manpower, komisioning, HM & UA, rental, big crane, roster, dan Pusat Informasi
+    // Muat cache lokal instan (0 query); sinkronisasi Supabase & Realtime dijalankan setelah sesi login aktif
+    if (typeof hydrateStateFromLocalCache === 'function') {
+        hydrateStateFromLocalCache();
+    }
     syncMasterDropdownOptions();
     renderRosterLegend();
     setActiveUserProfile(activeUserProfileKey, false);
-    fetchManpowerData(false);
+    renderManpowerTable();
     renderKomisioningTable();
     renderRentalBibTable();
     renderBigCraneTimeframeTable();

@@ -252,18 +252,23 @@ function updateMobileNavigationUi(activeSection = currentSection, activeSub = cu
             ? 'profil'
             : activeSection;
 
-        grid.className = `grid ${items.length === 4 ? 'grid-cols-4' : 'grid-cols-5'} items-center gap-1`;
+        const dockEl = document.getElementById('mobile-bottom-nav-dock');
+        if (dockEl) {
+            dockEl.classList.toggle('is-4-cols', items.length === 4);
+        }
+
+        grid.className = `relative z-[1] grid ${items.length === 4 ? 'grid-cols-4' : 'grid-cols-5'} items-center gap-0.5`;
         grid.innerHTML = items.map(item => {
             const isAct = highlightedTab === item.id;
             const btnCls = isAct
-                ? 'mob-nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-full bg-gradient-to-b from-[#1E826E] to-[#146555] text-white shadow-md shadow-teal-700/25 transition-all duration-200 focus:outline-none'
-                : 'mob-nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-full bg-transparent text-gray-500 hover:bg-[#F2EEE7] hover:text-gray-800 transition-all duration-200 focus:outline-none';
+                ? 'mob-nav-btn is-active flex flex-col items-center justify-center py-1.5 px-0.5 rounded-full bg-gradient-to-b from-[#1E826E] to-[#146555] text-white shadow-md shadow-teal-700/25 transition-all duration-200 focus:outline-none'
+                : 'mob-nav-btn flex flex-col items-center justify-center py-1.5 px-0.5 rounded-full bg-transparent text-gray-600 hover:bg-white/45 hover:text-gray-900 transition-all duration-200 focus:outline-none';
             const iconCls = isAct
                 ? 'mob-nav-icon flex items-center justify-center text-white transition-transform duration-200 scale-105'
-                : 'mob-nav-icon flex items-center justify-center text-gray-400 transition-transform duration-200';
+                : 'mob-nav-icon flex items-center justify-center text-gray-500 transition-transform duration-200';
             const lblCls = isAct
                 ? 'mob-nav-label text-[8px] font-bold text-white leading-none mt-1 truncate max-w-full transition-colors'
-                : 'mob-nav-label text-[8px] font-medium text-gray-500 leading-none mt-1 truncate max-w-full transition-colors';
+                : 'mob-nav-label text-[8px] font-semibold text-gray-600 leading-none mt-1 truncate max-w-full transition-colors';
             const onclickCall = item.sub
                 ? `navigateTo('${item.section}', '${item.sub}')`
                 : `navigateTo('${item.section}')`;
@@ -311,6 +316,7 @@ function updateMobileNavigationUi(activeSection = currentSection, activeSub = cu
     if (typeof closeAllMobileActionGroups === 'function') closeAllMobileActionGroups();
     if (typeof closeMobileFilterDrawer === 'function') closeMobileFilterDrawer(true);
     if (typeof syncMobileActionGroupVisibility === 'function') syncMobileActionGroupVisibility();
+    if (typeof syncMobileDockScrollState === 'function') syncMobileDockScrollState();
 }
 
 function renderMobileSubmenuDrawerContent(section = currentSection, subSection = currentSubSection) {
@@ -1499,6 +1505,59 @@ function initMobileMinimalToolbars() {
 }
 
 /* =====================================================================
+ * 5B. EFEK TRANSPARAN GLOSSY MOBILE BOTTOM BAR SAAT MENU DI-SCROLL
+ * ===================================================================== */
+
+let _mobDockScrollRaf = 0;
+
+function hasActiveSectionScrolledContent() {
+    const winY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    if (winY > 4) return true;
+
+    const activeSec = document.querySelector('main section.spa-section:not(.hidden)');
+    if (!activeSec) return false;
+
+    const scrollables = activeSec.querySelectorAll('.overflow-y-auto, .overflow-auto, .overflow-x-auto');
+    for (let i = 0; i < scrollables.length; i++) {
+        const el = scrollables[i];
+        if (el.scrollTop > 4 || el.scrollLeft > 4) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function syncMobileDockScrollState() {
+    const nav = document.getElementById('mobile-bottom-nav');
+    if (!nav) return;
+    nav.classList.toggle('is-scrolled', hasActiveSectionScrolledContent());
+}
+
+function initMobileDockScrollGlass() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (window.__pantauMobDockScrollReady) return;
+    window.__pantauMobDockScrollReady = true;
+
+    const scheduleSync = (ev) => {
+        const target = ev && ev.target;
+        if (target && target !== document && target !== window && target.closest) {
+            if (target.closest('div[id^="modal-"], #mobile-submenu-drawer, #mob-filter-sheet-portal')) {
+                return;
+            }
+        }
+        if (_mobDockScrollRaf) return;
+        _mobDockScrollRaf = requestAnimationFrame(() => {
+            _mobDockScrollRaf = 0;
+            syncMobileDockScrollState();
+        });
+    };
+
+    window.addEventListener('scroll', scheduleSync, { passive: true });
+    document.addEventListener('scroll', scheduleSync, { capture: true, passive: true });
+    syncMobileDockScrollState();
+}
+
+/* =====================================================================
  * 6. APPLY ROLE & NAVIGASI TERPADU (DIPANGGIL SAAT LOGIN / GANTI ROLE / INIT)
  * ===================================================================== */
 
@@ -1521,6 +1580,7 @@ function applyRoleAccessAndNavigationUi() {
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         initMobileMinimalToolbars();
+        initMobileDockScrollGlass();
         setTimeout(() => {
             applyRoleAccessAndNavigationUi();
         }, 40);

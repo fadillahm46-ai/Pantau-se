@@ -1858,27 +1858,143 @@ function renderAbsensiMonthlyTable() {
     }).join('');
 }
 
+function parseExcelTimeToHHMMSS(rawVal) {
+    if (rawVal === null || rawVal === undefined || rawVal === '') return '';
+
+    if (rawVal instanceof Date && !isNaN(rawVal.getTime())) {
+        const hh = String(rawVal.getHours()).padStart(2, '0');
+        const mm = String(rawVal.getMinutes()).padStart(2, '0');
+        const ss = String(rawVal.getSeconds()).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+    }
+
+    if (typeof rawVal === 'number' && !isNaN(rawVal)) {
+        if (rawVal <= 0) return '';
+        const frac = rawVal >= 1 ? (rawVal % 1) : rawVal;
+        if (rawVal >= 1 && frac < 1e-6) return '';
+        let totalSec = Math.round(frac * 86400);
+        if (totalSec >= 86400) totalSec = totalSec % 86400;
+        const hh = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+        const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+    }
+
+    const str = String(rawVal).trim();
+    if (!str || /^[-–—]+$/.test(str) || /^(null|undefined|n\/a|na|none|0)$/i.test(str)) return '';
+
+    // Tangkap format jam (dengan/tanpa tanggal di depan & opsional AM/PM): 05:45:12, 5:45, 05.45.12, 2026-11-28 05:45:12
+    const timeMatch = str.match(/(?:^|[\sT])(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?\s*(AM|PM)?(?:\s|$)/i);
+    if (timeMatch) {
+        let hh = parseInt(timeMatch[1], 10);
+        const mm = parseInt(timeMatch[2], 10);
+        const ss = timeMatch[3] !== undefined ? parseInt(timeMatch[3], 10) : 0;
+        const mer = (timeMatch[4] || '').toUpperCase();
+        if (mer === 'PM' && hh < 12) hh += 12;
+        if (mer === 'AM' && hh === 12) hh = 0;
+        if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59 && ss >= 0 && ss <= 59) {
+            return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+        }
+    }
+
+    // Fallback bila angka disimpan sebagai string desimal Excel (mis. "0.2451388")
+    if (/^0?\.\d+$/.test(str)) {
+        return parseExcelTimeToHHMMSS(parseFloat(str));
+    }
+
+    return '';
+}
+
+function normalizeAbsensiExcelDate(rawVal) {
+    if (rawVal === null || rawVal === undefined || rawVal === '') return '';
+    if (rawVal instanceof Date && !isNaN(rawVal.getTime())) {
+        return `${rawVal.getFullYear()}-${String(rawVal.getMonth() + 1).padStart(2, '0')}-${String(rawVal.getDate()).padStart(2, '0')}`;
+    }
+    if (typeof rawVal === 'number' && !isNaN(rawVal) && rawVal > 20000) {
+        const utcDays = Math.floor(rawVal - 25569);
+        const d = new Date(utcDays * 86400 * 1000);
+        if (!isNaN(d.getTime())) {
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+        }
+    }
+
+    const str = String(rawVal).trim();
+    if (!str || /^[-–—]+$/.test(str)) return '';
+
+    // 1. YYYY-MM-DD atau YYYY/MM/DD (opsional diikuti jam)
+    const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[\sT].*)?$/);
+    if (ymd) {
+        return `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
+    }
+
+    // 2. DD/MM/YYYY, DD-MM-YYYY, atau MM/DD/YYYY (auto-deteksi jika angka tengah > 12)
+    const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:[\sT].*)?$/);
+    if (dmy) {
+        let p1 = parseInt(dmy[1], 10);
+        let p2 = parseInt(dmy[2], 10);
+        let yr = parseInt(dmy[3], 10);
+        if (yr < 100) yr += 2000;
+        let dd = p1;
+        let mm = p2;
+        if (p2 > 12 && p1 <= 12) {
+            mm = p1;
+            dd = p2;
+        }
+        if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+            return `${yr}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+        }
+    }
+
+    // 3. DD MMM YYYY (ID / EN, mis. "28 Nov 2026" atau "28-Nov-26")
+    const monMap = {
+        jan: 1, feb: 2, mar: 3, apr: 4, mei: 5, may: 5, jun: 6,
+        jul: 7, agu: 8, agt: 8, aug: 8, sep: 9, okt: 10, oct: 10, nov: 11, des: 12, dec: 12
+    };
+    const dMonY = str.match(/^(\d{1,2})[\s\-\/]([A-Za-z]{3,9})[\s\-\/](\d{2,4})/);
+    if (dMonY) {
+        const dd = parseInt(dMonY[1], 10);
+        const mm = monMap[dMonY[2].slice(0, 3).toLowerCase()];
+        let yr = parseInt(dMonY[3], 10);
+        if (yr < 100) yr += 2000;
+        if (mm && dd >= 1 && dd <= 31) {
+            return `${yr}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+        }
+    }
+
+    if (typeof normalizeExcelDate === 'function') {
+        return normalizeExcelDate(rawVal);
+    }
+    return '';
+}
+
 function evaluateAbsensiRule(codeStr, cekinStr) {
     const code = String(codeStr || '').trim().toUpperCase();
-    const rule = resolveRosterCodeRule(code);
-    const arti = rule?.artiSistem || '';
+    const cleanCekin = parseExcelTimeToHHMMSS(cekinStr);
 
-    if (arti === 'LIBUR' || code.startsWith('OFF')) return { shift: 'OFF', status: 'OFF' };
-    if (arti === 'CUTI' || code.startsWith('CCUTI') || code.startsWith('CUTI')) return { shift: '-', status: 'Cuti' };
-    if (arti === 'INDUKSI' || code.startsWith('INDK')) return { shift: '-', status: 'Induksi' };
-    if (arti === 'MCU' || code.startsWith('MCU')) return { shift: '-', status: 'MCU' };
-    if (arti === 'TRAINING' || code.startsWith('TR')) return { shift: '-', status: 'Training' };
-    if (arti === 'SAKIT') return { shift: '-', status: 'Sakit' };
-    if (arti === 'IZIN') return { shift: '-', status: 'Izin' };
-
-    const shift = (arti === 'SHIFT_2' || (!arti && (code.startsWith('N') || code === 'S2' || code === '2' || code === 'NIGHT'))) ? 'S2' : 'S1';
-    if (!cekinStr) {
-        return { shift, status: 'NC' };
+    // Aturan acuan shift dari kolom Code:
+    // - Awalan D -> Shift 1 (S1, batas cekin <= 06:15)
+    // - Awalan N -> Shift 2 (S2, batas cekin <= 18:15)
+    // - Selain itu -> dikasih strip (-)
+    let shift = '-';
+    if (code.startsWith('D')) {
+        shift = 'S1';
+    } else if (code.startsWith('N')) {
+        shift = 'S2';
+    } else {
+        return { shift: '-', cekin: '', status: '-' };
     }
-    const parts = cekinStr.split(':').map(x => parseInt(x, 10));
+
+    if (!cleanCekin) {
+        return { shift, cekin: '', status: 'NC' };
+    }
+    const parts = cleanCekin.split(':').map(x => parseInt(x, 10));
     const totalMinutes = (parts[0] || 0) * 60 + (parts[1] || 0);
     const limitMinutes = shift === 'S1' ? (6 * 60 + 15) : (18 * 60 + 15);
-    return { shift, status: totalMinutes > limitMinutes ? 'Telat Absensi' : 'Sesuai' };
+    return {
+        shift,
+        cekin: cleanCekin,
+        status: totalMinutes > limitMinutes ? 'Telat Absensi' : 'Sesuai'
+    };
 }
 
 function downloadSampleRawAbsensiExcel() {
@@ -1886,13 +2002,19 @@ function downloadSampleRawAbsensiExcel() {
         showToast('Library Excel (SheetJS) belum termuat.', 'error');
         return;
     }
-    const headers = [['NRP', 'Name', 'Position', 'Date', 'In', 'Code']];
+    const headers = [[
+        'NRP', 'Name', 'Position', 'Date', 'In', 'Out', 'Job',
+        'Dept', 'Company', 'Code', 'Device', 'Owner', 'Device Count', 'Device ID'
+    ]];
     const ws = XLSX.utils.aoa_to_sheet(headers);
-    ws['!cols'] = [{ wch: 12 }, { wch: 24 }, { wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 10 }];
+    ws['!cols'] = [
+        { wch: 12 }, { wch: 24 }, { wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 16 },
+        { wch: 14 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 13 }, { wch: 14 }
+    ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template Absensi');
     XLSX.writeFile(wb, 'Template_Upload_Absensi_PANTAU_SE.xlsx');
-    showToast('Template kosong Absensi (judul kolom saja) berhasil diunduh.', 'success');
+    showToast('Template kosong Absensi (14 kolom standar) berhasil diunduh.', 'success');
 }
 
 function handleAbsensiRawFileUpload(event) {
@@ -1910,60 +2032,144 @@ function handleAbsensiRawFileUpload(event) {
     reader.onload = function (e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array', cellDates: false });
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+            const matrix = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: true });
 
-            const matchedList = [];
-            let ignoredCount = 0;
-            const todayIso = getTodayISO();
+            if (!Array.isArray(matrix) || matrix.length < 2) {
+                pendingAbsensiUpload = [];
+                renderAbsensiUploadPreview();
+                showToast('File Absensi kosong atau tidak memiliki baris data.', 'error');
+                return;
+            }
 
-            jsonRows.forEach(row => {
-                const rawNrp = String(findRowValueByAliases(row, ['NRP', 'NIK']) || '').trim();
-                const rawName = String(findRowValueByAliases(row, ['Name', 'Nama']) || '').trim();
-                const rawDate = findRowValueByAliases(row, ['Date', 'Tanggal', 'Tgl']);
-                const rawIn = findRowValueByAliases(row, ['In', 'Cekin', 'Check In']);
-                const rawCode = String(findRowValueByAliases(row, ['Code', 'Shift', 'Kode']) || '').trim().toUpperCase();
-
-                const mp = manpowerState.find(m =>
-                    (rawNrp && String(m.nrp).trim().toLowerCase() === rawNrp.toLowerCase()) ||
-                    (rawName && String(m.nama).trim().toLowerCase() === rawName.toLowerCase())
-                );
-
-                if (mp) {
-                    const dateIso = normalizeExcelDate(rawDate) || todayIso;
-                    const cekin = parseExcelTimeToHHMMSS(rawIn);
-                    const ev = evaluateAbsensiRule(rawCode, cekin);
-                    matchedList.push({
-                        mpId: mp.id,
-                        nrp: mp.nrp,
-                        nama: mp.nama,
-                        dateIso,
-                        code: rawCode || '-',
-                        shift: ev.shift,
-                        cekin,
-                        status: ev.status
-                    });
-                } else {
-                    ignoredCount++;
+            const normHeader = (h) => String(h || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            const findColIdx = (hdrs, aliases) => {
+                for (const alias of aliases) {
+                    const idx = hdrs.findIndex(h => h === alias);
+                    if (idx !== -1) return idx;
                 }
+                return -1;
+            };
+
+            // Cari baris header (cek 10 baris pertama) yang memuat NRP dan minimal Date / In / Code
+            let headerRowIdx = 0;
+            let nrpIdx = -1;
+            let dateIdx = -1;
+            let inIdx = -1;
+            let codeIdx = -1;
+
+            const maxScan = Math.min(matrix.length, 10);
+            for (let r = 0; r < maxScan; r++) {
+                const hdrs = (matrix[r] || []).map(normHeader);
+                const cNrp = findColIdx(hdrs, ['nrp', 'nik', 'no nrp', 'id karyawan']);
+                const cDate = findColIdx(hdrs, ['date', 'tanggal', 'tgl', 'work date', 'att date']);
+                const cIn = findColIdx(hdrs, ['in', 'cekin', 'check in', 'checkin', 'jam masuk', 'time in', 'clock in']);
+                const cCode = findColIdx(hdrs, ['code', 'kode', 'shift', 'shift code', 'roster code']);
+                if (cNrp !== -1 && (cDate !== -1 || cIn !== -1 || cCode !== -1)) {
+                    headerRowIdx = r;
+                    nrpIdx = cNrp;
+                    dateIdx = cDate;
+                    inIdx = cIn;
+                    codeIdx = cCode;
+                    break;
+                }
+            }
+
+            if (nrpIdx === -1) {
+                pendingAbsensiUpload = [];
+                renderAbsensiUploadPreview();
+                showToast('Kolom "NRP" tidak ditemukan. Pastikan header sesuai format (NRP, Date, In, Code).', 'error');
+                return;
+            }
+
+            // Indeks cepat manpower berdasarkan NRP
+            const normalizeNrp = (val) => String(val ?? '').trim().replace(/\.0+$/, '').toLowerCase();
+            const stripLeadingZeros = (s) => (/^\d+$/.test(s) ? s.replace(/^0+/, '') : s);
+            const mpByNrp = new Map();
+            const mpByNumericNrp = new Map();
+            (manpowerState || []).forEach(m => {
+                const key = normalizeNrp(m.nrp);
+                if (!key) return;
+                mpByNrp.set(key, m);
+                const stripped = stripLeadingZeros(key);
+                if (stripped && !mpByNumericNrp.has(stripped)) mpByNumericNrp.set(stripped, m);
             });
 
-            pendingAbsensiUpload = matchedList;
+            const todayIso = getTodayISO();
+            const matchedByKey = new Map();
+            let totalDataRows = 0;
+            let ignoredCount = 0;
+
+            for (let r = headerRowIdx + 1; r < matrix.length; r++) {
+                const cols = matrix[r];
+                if (!Array.isArray(cols) || cols.every(v => String(v ?? '').trim() === '')) continue;
+                totalDataRows++;
+
+                const rawNrp = normalizeNrp(cols[nrpIdx]);
+                const rawDate = dateIdx !== -1 ? cols[dateIdx] : '';
+                const rawIn = inIdx !== -1 ? cols[inIdx] : '';
+                const rawCode = codeIdx !== -1 ? String(cols[codeIdx] ?? '').trim().toUpperCase() : '';
+
+                const mp = rawNrp
+                    ? (mpByNrp.get(rawNrp) || mpByNumericNrp.get(stripLeadingZeros(rawNrp)) || null)
+                    : null;
+
+                if (!mp) {
+                    ignoredCount++;
+                    continue;
+                }
+
+                const dateIso = normalizeAbsensiExcelDate(rawDate) || todayIso;
+                const cekinRaw = parseExcelTimeToHHMMSS(rawIn);
+                const ev = evaluateAbsensiRule(rawCode, cekinRaw);
+
+                const itemKey = `${mp.id}::${dateIso}`;
+                const nextItem = {
+                    mpId: mp.id,
+                    nrp: mp.nrp,
+                    nama: mp.nama,
+                    dateIso,
+                    code: (ev.shift === 'S1' || ev.shift === 'S2') ? (rawCode || '-') : '-',
+                    shift: ev.shift,
+                    cekin: ev.cekin,
+                    status: ev.status
+                };
+
+                // Jika 1 NRP + tanggal muncul >1 baris dalam file, prioritaskan shift valid (S1/S2) & cekin paling awal
+                const prev = matchedByKey.get(itemKey);
+                if (!prev) {
+                    matchedByKey.set(itemKey, nextItem);
+                } else {
+                    const prevHasShift = prev.shift === 'S1' || prev.shift === 'S2';
+                    const nextHasShift = nextItem.shift === 'S1' || nextItem.shift === 'S2';
+                    if (!prevHasShift && nextHasShift) {
+                        matchedByKey.set(itemKey, nextItem);
+                    } else if (prevHasShift && nextHasShift) {
+                        if (!prev.cekin && nextItem.cekin) {
+                            matchedByKey.set(itemKey, nextItem);
+                        } else if (prev.cekin && nextItem.cekin && nextItem.cekin < prev.cekin) {
+                            matchedByKey.set(itemKey, nextItem);
+                        }
+                    }
+                }
+            }
+
+            pendingAbsensiUpload = Array.from(matchedByKey.values());
 
             const statsWrap = document.getElementById('absensi-upload-stats');
             if (statsWrap) { statsWrap.classList.remove('hidden'); statsWrap.classList.add('grid'); }
             const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
-            setTxt('absensi-stat-total', jsonRows.length);
+            setTxt('absensi-stat-total', totalDataRows);
             setTxt('absensi-stat-matched', pendingAbsensiUpload.length);
             setTxt('absensi-stat-ignored', ignoredCount);
 
             renderAbsensiUploadPreview();
 
             if (pendingAbsensiUpload.length > 0) {
-                showToast(`${pendingAbsensiUpload.length} baris absensi cocok dari ${jsonRows.length} baris mentah.`, 'info');
+                showToast(`${pendingAbsensiUpload.length} data absensi cocok dari ${totalDataRows} baris file.`, 'info');
             } else {
-                showToast('Tidak ada NRP/Nama pada file yang cocok dengan Data Manpower.', 'error');
+                showToast('Tidak ada NRP pada file yang cocok dengan Data Manpower.', 'error');
             }
         } catch (err) {
             console.error('Gagal membaca file mentah Absensi:', err);
@@ -1991,7 +2197,7 @@ function renderAbsensiUploadPreview() {
                     <td class="py-3 px-4 font-mono text-gray-600 whitespace-nowrap">${escapeHtml(item.nrp)}</td>
                     <td class="py-3 px-4 text-gray-800 whitespace-nowrap">${escapeHtml(item.nama)}</td>
                     <td class="py-3 px-4 text-gray-600 whitespace-nowrap">${formatDateID(item.dateIso)}</td>
-                    <td class="py-3 px-4 text-gray-600 whitespace-nowrap">${escapeHtml(item.code)} ${item.shift !== '-' ? `(${item.shift === 'S1' ? 'Shift 1' : 'Shift 2'})` : '(-)'}</td>
+                    <td class="py-3 px-4 text-gray-600 whitespace-nowrap">${item.shift === 'S1' ? `${escapeHtml(item.code)} (Shift 1)` : (item.shift === 'S2' ? `${escapeHtml(item.code)} (Shift 2)` : '-')}</td>
                     <td class="py-3 px-4 font-mono text-gray-800 whitespace-nowrap">${escapeHtml(item.cekin || '-')}</td>
                     <td class="py-3 px-4 whitespace-nowrap"><span class="px-2.5 py-0.5 rounded-full ${getAbsensiStatusBadgeClass(item.status)}">${escapeHtml(item.status)}</span></td>
                 </tr>
@@ -2009,13 +2215,17 @@ function resetAbsensiUploadState() {
     renderAbsensiUploadPreview();
 }
 
-function applyPendingAbsensiUpload() {
+async function applyPendingAbsensiUpload() {
     if (!pendingAbsensiUpload.length) return;
+    const applyBtn = document.getElementById('btn-apply-absensi-upload');
+    if (applyBtn) applyBtn.disabled = true;
+
     const saveMode = document.getElementById('absensi-upload-save-mode')?.value || 'overwrite';
     let latestDate = '';
     let added = 0;
     let updated = 0;
     let skipped = 0;
+    const rowsToSync = [];
 
     pendingAbsensiUpload.forEach(item => {
         const key = `${item.mpId}::${item.dateIso}`;
@@ -2029,8 +2239,9 @@ function applyPendingAbsensiUpload() {
         if (hasExisting) updated++;
         else added++;
 
-        absensiRecordsState[key] = {
+        const rec = {
             mpId: item.mpId,
+            nrp: item.nrp,
             date: item.dateIso,
             code: item.code,
             shift: item.shift,
@@ -2038,12 +2249,18 @@ function applyPendingAbsensiUpload() {
             status: item.status,
             note: existing?.note || ''
         };
+        absensiRecordsState[key] = rec;
+        rowsToSync.push({ recordKey: key, ...rec });
         if (!latestDate || item.dateIso > latestDate) latestDate = item.dateIso;
     });
 
     if (latestDate) {
         const dateInput = document.getElementById('absensi-monitoring-date');
         if (dateInput) dateInput.value = latestDate;
+    }
+
+    if (rowsToSync.length > 0 && typeof pushAbsensiRecordsToSupabase === 'function') {
+        await pushAbsensiRecordsToSupabase(rowsToSync).catch(() => {});
     }
 
     resetAbsensiUploadState();
@@ -2089,15 +2306,23 @@ function handleEditAbsensiSubmit(event) {
     const note = (document.getElementById('edit-absensi-note')?.value || '').trim();
 
     if (!mpId || !dateIso) return;
-    absensiRecordsState[`${mpId}::${dateIso}`] = {
+    const mp = manpowerState.find(m => Number(m.id) === Number(mpId));
+    const key = `${mpId}::${dateIso}`;
+    const rec = {
         mpId: Number(mpId),
+        nrp: mp?.nrp || '',
         date: dateIso,
         code: shift === 'S1' ? 'DWS' : (shift === 'S2' ? 'NWS' : '-'),
         shift,
-        cekin,
+        cekin: (shift === 'S1' || shift === 'S2') ? (parseExcelTimeToHHMMSS(cekin) || cekin) : '',
         status,
         note
     };
+    absensiRecordsState[key] = rec;
+
+    if (typeof pushAbsensiRecordsToSupabase === 'function') {
+        pushAbsensiRecordsToSupabase([{ recordKey: key, ...rec }]).catch(() => {});
+    }
 
     closeEditAbsensiModal();
     renderPerformaManpower();
@@ -2580,7 +2805,7 @@ function formatWaHref(kontak) {
 function buildMpDetailDocRowHtml(mp, label, docKey, dateStr, showStatus = true) {
     const hasDate = Boolean(String(dateStr || '').trim());
     const mediaObj = mp.media_links && mp.media_links[docKey] ? mp.media_links[docKey] : null;
-    const hasPhoto = Boolean(mediaObj && (mediaObj.viewUrl || mediaObj.driveUrl || mediaObj.dataUrl));
+    const hasPhoto = Boolean(mediaObj && (mediaObj.viewUrl || mediaObj.driveUrl || mediaObj._localPreviewUrl));
 
     if (!hasDate) {
         return `
@@ -2700,7 +2925,7 @@ function renderManpowerDetailPanel(mp) {
         const docDate = docKey === 'MCU' ? effectiveMcu : (docs[docKey] || '');
         const st = formatManpowerDetailStatus(docKey, docDate);
         const mediaObj = mp.media_links && mp.media_links[docKey] ? mp.media_links[docKey] : null;
-        const imgSrc = mediaObj?.viewUrl || mediaObj?.dataUrl || '';
+        const imgSrc = mediaObj?.viewUrl || mediaObj?.driveUrl || mediaObj?._localPreviewUrl || '';
         const driveUrl = mediaObj?.driveUrl || '';
 
         previewCardHtml = `
@@ -2801,6 +3026,11 @@ async function handleManpowerDocPhotoUpload(event, mpId, docKey) {
     const file = event.target?.files?.[0];
     const mp = manpowerState.find(m => Number(m.id) === Number(mpId));
     if (!file || !mp) return;
+    if (!/^image\//i.test(file.type || '') && !/\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name || '')) {
+        showToast('Harap pilih file foto/gambar (JPG, PNG, WEBP).', 'error');
+        event.target.value = '';
+        return;
+    }
 
     const reader = new FileReader();
     reader.onload = async (ev) => {
@@ -2808,36 +3038,67 @@ async function handleManpowerDocPhotoUpload(event, mpId, docKey) {
         if (!dataUrl) return;
         if (!mp.media_links || typeof mp.media_links !== 'object') mp.media_links = {};
 
-        let mediaEntry = { dataUrl, viewUrl: dataUrl, fileName: file.name };
-        if (typeof isGasConfigured === 'function' && isGasConfigured() && typeof uploadMediaToGas === 'function') {
-            try {
-                showToast(`Mengunggah foto ${docKey} ke Google Drive...`, 'info');
-                const gasRes = await uploadMediaToGas({
-                    dataUrl,
-                    fileName: `${docKey}_${mp.nrp}_${file.name}`,
-                    module: 'MANPOWER_DOCS',
-                    refId: `${mp.nrp}_${docKey}`,
-                    nrp: mp.nrp,
-                    label: `${docKey} - ${mp.nama}`
-                });
-                if (gasRes && gasRes.ok) {
-                    mediaEntry = {
-                        mediaCode: gasRes.mediaCode || '',
-                        fileId: gasRes.fileId || '',
-                        viewUrl: gasRes.viewUrl || dataUrl,
-                        driveUrl: gasRes.driveUrl || '',
-                        fileName: gasRes.fileName || file.name
-                    };
-                }
-            } catch (_) {
-                showToast('Upload Google Drive gagal — foto disimpan di perangkat lokal.', 'info');
-            }
+        const prevEntry = mp.media_links[docKey] || {};
+        const cleanUrl = (u) => (typeof sanitizeSafeMediaUrl === 'function' ? sanitizeSafeMediaUrl(u) : (/^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : ''));
+
+        if (typeof isGasConfigured !== 'function' || !isGasConfigured() || typeof uploadMediaToGas !== 'function') {
+            mp.media_links[docKey] = {
+                _localPreviewUrl: dataUrl,
+                fileName: file.name
+            };
+            activeManpowerDetailDocKey = docKey;
+            renderManpowerDetailPanel(mp);
+            showToast('GAS Drive belum aktif — foto hanya tampil lokal sementara & TIDAK dikirim ke Supabase.', 'error');
+            return;
         }
 
-        mp.media_links[docKey] = mediaEntry;
-        activeManpowerDetailDocKey = docKey;
-        renderManpowerDetailPanel(mp);
-        showToast(`Foto dokumen ${docKey} untuk ${mp.nama} berhasil disimpan.`, 'success');
+        try {
+            showToast(`Mengunggah foto ${docKey} ke Google Drive...`, 'info');
+            const gasRes = await uploadMediaToGas({
+                dataUrl,
+                fileName: `${docKey}_${mp.nrp}_${file.name}`,
+                module: 'MANPOWER_DOCS',
+                refId: `${mp.nrp}_${docKey}`,
+                nrp: mp.nrp,
+                label: `${docKey} - ${mp.nama}`,
+                oldFileId: prevEntry.fileId || ''
+            });
+            const safeView = cleanUrl(gasRes?.viewUrl || gasRes?.driveUrl || '');
+            const safeDrive = cleanUrl(gasRes?.driveUrl || '');
+            if (!gasRes || !gasRes.ok || (!safeView && !safeDrive)) {
+                throw new Error(gasRes?.error || 'Link Google Drive tidak diterima dari GAS.');
+            }
+
+            // Simpan HANYA link Google Drive & kode Spreadsheet (ZERO base64/foto di Supabase)
+            mp.media_links[docKey] = {
+                mediaCode: String(gasRes.mediaCode || ''),
+                fileId: String(gasRes.fileId || ''),
+                viewUrl: safeView || safeDrive,
+                driveUrl: safeDrive || safeView,
+                fileName: String(gasRes.fileName || file.name)
+            };
+
+            if (typeof patchManpowerMediaLinksToSupabase === 'function') {
+                await patchManpowerMediaLinksToSupabase(mp.nrp, mp.media_links);
+            } else if (typeof pushManpowerRowsToSupabase === 'function') {
+                await pushManpowerRowsToSupabase([mp]);
+            }
+
+            activeManpowerDetailDocKey = docKey;
+            renderManpowerDetailPanel(mp);
+            showToast(`Foto ${docKey} tersimpan di Google Drive${gasRes.mediaCode ? ` (${gasRes.mediaCode})` : ''} & link tersinkron.`, 'success');
+        } catch (err) {
+            console.warn('Upload foto dokumen manpower ke GAS Drive gagal:', err);
+            // Preview sementara di perangkat lokal; _localPreviewUrl otomatis dibuang sebelum kirim ke Supabase
+            mp.media_links[docKey] = {
+                ...prevEntry,
+                _localPreviewUrl: dataUrl,
+                fileName: file.name
+            };
+            activeManpowerDetailDocKey = docKey;
+            renderManpowerDetailPanel(mp);
+            showToast('Upload ke Google Drive gagal — foto hanya tampil sementara di perangkat ini & TIDAK dikirim ke Supabase.', 'error');
+        }
     };
     reader.readAsDataURL(file);
 }

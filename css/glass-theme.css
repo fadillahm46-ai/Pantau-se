@@ -1,0 +1,939 @@
+/* =========================================================================
+ * PANTAU SE — FROSTED EMERALD GLASSMORPHISM THEME
+ * Desain glassmorphism rapi, terang, kontras tinggi, & optimal untuk tabel
+ * data operasional Support Equipment (Desktop & Mobile PWA).
+ * ========================================================================= */
+
+:root {
+    --glass-canvas-base: #EAF2F0;
+    --glass-text-primary: #1F2A28;
+    --glass-text-secondary: #4E5E5A;
+    --glass-text-muted: #70807C;
+
+    /* Elevation Tiers */
+    --glass-shell-bg: rgba(250, 253, 252, 0.66);
+    --glass-header-bg: rgba(248, 252, 251, 0.64);
+    --glass-card-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(250, 253, 252, 0.56) 100%);
+    --glass-card-bg-hover: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 253, 251, 0.70) 100%);
+    --glass-subcard-bg: rgba(255, 255, 255, 0.48);
+    --glass-modal-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.90) 0%, rgba(247, 252, 250, 0.82) 100%);
+    --glass-drawer-bg: rgba(250, 253, 252, 0.86);
+    --glass-dock-bg: rgba(255, 255, 255, 0.72);
+
+    /* Table & Sticky Glass Surfaces (High Opacity on Sticky to prevent bleed-through) */
+    --glass-thead-bg: rgba(238, 246, 244, 0.88);
+    --glass-row-bg: rgba(255, 255, 255, 0.46);
+    --glass-row-alt-bg: rgba(239, 247, 245, 0.44);
+    --glass-row-hover-bg: rgba(27, 115, 97, 0.08);
+    --glass-sticky-bg: rgba(249, 252, 251, 0.94);
+    --glass-sticky-alt-bg: rgba(241, 247, 245, 0.95);
+    --glass-sticky-head-bg: rgba(235, 244, 241, 0.96);
+
+    /* Borders & Specular Highlights */
+    --glass-border: rgba(255, 255, 255, 0.82);
+    --glass-border-subtle: rgba(15, 76, 65, 0.10);
+    --glass-border-teal: rgba(27, 115, 97, 0.28);
+    --glass-divider: rgba(15, 76, 65, 0.085);
+
+    /* Shadows */
+    --glass-shadow-card:
+        0 10px 30px -12px rgba(13, 62, 53, 0.13),
+        0 2px 8px -2px rgba(15, 23, 42, 0.045),
+        inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    --glass-shadow-card-hover:
+        0 16px 36px -12px rgba(21, 94, 79, 0.20),
+        0 4px 12px -2px rgba(15, 23, 42, 0.055),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    --glass-shadow-shell:
+        0 8px 32px -12px rgba(13, 62, 53, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    --glass-shadow-modal:
+        0 28px 64px -16px rgba(10, 44, 38, 0.30),
+        0 8px 24px -8px rgba(15, 23, 42, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    --glass-shadow-dock:
+        0 14px 34px -8px rgba(13, 68, 58, 0.24),
+        0 3px 10px -2px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
+
+    /* Blur Intensities */
+    --glass-blur-sm: blur(12px) saturate(145%);
+    --glass-blur-md: blur(18px) saturate(160%);
+    --glass-blur-lg: blur(24px) saturate(175%);
+
+    /* Primary Emerald Glass Accent */
+    --glass-primary-grad: linear-gradient(135deg, #218A75 0%, #1B7361 52%, #135A4C 100%);
+    --glass-primary-grad-hover: linear-gradient(135deg, #24967F 0%, #1E7E6A 52%, #156454 100%);
+    --glass-primary-shadow:
+        0 8px 20px -6px rgba(27, 115, 97, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* =========================================================================
+ * 1. AMBIENT MESH GRADIENT CANVAS (Fixed Backdrop untuk Efek Kaca Nyata)
+ * ========================================================================= */
+html {
+    background-color: var(--glass-canvas-base);
+}
+
+body.theme-glass {
+    background-color: transparent !important;
+    color: var(--glass-text-primary);
+    position: relative;
+    isolation: isolate;
+}
+
+body.theme-glass::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 56% 52% at 6% 8%, rgba(27, 115, 97, 0.23) 0%, rgba(27, 115, 97, 0) 70%),
+        radial-gradient(ellipse 52% 48% at 93% 10%, rgba(56, 189, 248, 0.20) 0%, rgba(56, 189, 248, 0) 68%),
+        radial-gradient(ellipse 48% 46% at 52% 46%, rgba(45, 212, 191, 0.13) 0%, rgba(45, 212, 191, 0) 70%),
+        radial-gradient(ellipse 54% 48% at 12% 92%, rgba(234, 179, 108, 0.20) 0%, rgba(234, 179, 108, 0) 70%),
+        radial-gradient(ellipse 48% 48% at 90% 88%, rgba(16, 148, 124, 0.19) 0%, rgba(16, 148, 124, 0) 70%),
+        linear-gradient(135deg, #E8F2EF 0%, #F3F7F5 48%, #E7F1F4 100%);
+}
+
+body.theme-glass::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(27, 115, 97, 0.055) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(ellipse 85% 85% at 50% 40%, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 40%, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+}
+
+/* Custom Translucent Scrollbar */
+body.theme-glass ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+body.theme-glass ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+body.theme-glass ::-webkit-scrollbar-thumb {
+    background: rgba(27, 115, 97, 0.24);
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+body.theme-glass ::-webkit-scrollbar-thumb:hover {
+    background: rgba(27, 115, 97, 0.42);
+}
+
+/* =========================================================================
+ * 2. SHELL CHROME: DESKTOP SIDEBAR & TOP STICKY HEADER
+ * ========================================================================= */
+body.theme-glass #desktop-sidebar {
+    background: linear-gradient(180deg, rgba(252, 255, 254, 0.72) 0%, rgba(244, 250, 248, 0.62) 100%);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border-right: 1px solid var(--glass-border);
+    box-shadow:
+        6px 0 32px -12px rgba(13, 62, 53, 0.13),
+        inset -1px 0 0 rgba(15, 76, 65, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+body.theme-glass #desktop-sidebar > div:first-child {
+    border-bottom-color: var(--glass-divider);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+body.theme-glass #desktop-sidebar > div:last-child {
+    border-top-color: var(--glass-divider);
+    background: rgba(255, 255, 255, 0.30);
+}
+
+body.theme-glass #desktop-sidebar > div:last-child > div {
+    background: rgba(255, 255, 255, 0.56);
+    border: 1px solid rgba(255, 255, 255, 0.80);
+    border-radius: 0.85rem;
+    padding: 0.4rem 0.5rem;
+    box-shadow: 0 4px 12px -6px rgba(13, 62, 53, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+body.theme-glass #desktop-sidebar #sidebar-user-avatar {
+    background: var(--glass-primary-grad);
+    box-shadow: 0 4px 10px -3px rgba(27, 115, 97, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+/* Sidebar Navigation Buttons */
+body.theme-glass #desktop-sidebar .nav-sidebar-item {
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+body.theme-glass #desktop-sidebar .nav-sidebar-item.bg-teal-500 {
+    background: var(--glass-primary-grad);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: var(--glass-primary-shadow);
+    color: #FFFFFF;
+}
+
+body.theme-glass #desktop-sidebar .nav-sidebar-item:not(.bg-teal-500):hover {
+    background: rgba(255, 255, 255, 0.68);
+    border-color: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 4px 12px -6px rgba(13, 62, 53, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: #114B40;
+}
+
+/* Sidebar Submenus */
+body.theme-glass #desktop-sidebar [id$="-submenu"] {
+    border-left-color: rgba(27, 115, 97, 0.22);
+}
+
+body.theme-glass #desktop-sidebar .subnav-item,
+body.theme-glass #desktop-sidebar .subnav-performa-item,
+body.theme-glass #desktop-sidebar .subnav-utilitas-item,
+body.theme-glass #desktop-sidebar .subnav-operasional-item,
+body.theme-glass #desktop-sidebar .subnav-roster-item {
+    border: 1px solid transparent;
+}
+
+body.theme-glass #desktop-sidebar .subnav-item.bg-teal-50,
+body.theme-glass #desktop-sidebar .subnav-performa-item.bg-teal-50,
+body.theme-glass #desktop-sidebar .subnav-utilitas-item.bg-teal-50,
+body.theme-glass #desktop-sidebar .subnav-operasional-item.bg-teal-50,
+body.theme-glass #desktop-sidebar .subnav-roster-item.bg-teal-50 {
+    background: rgba(27, 115, 97, 0.12);
+    border-color: rgba(27, 115, 97, 0.20);
+    color: #114B40;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+body.theme-glass #desktop-sidebar .subnav-item:not(.bg-teal-50):hover,
+body.theme-glass #desktop-sidebar .subnav-performa-item:not(.bg-teal-50):hover,
+body.theme-glass #desktop-sidebar .subnav-utilitas-item:not(.bg-teal-50):hover,
+body.theme-glass #desktop-sidebar .subnav-operasional-item:not(.bg-teal-50):hover,
+body.theme-glass #desktop-sidebar .subnav-roster-item:not(.bg-teal-50):hover {
+    background: rgba(255, 255, 255, 0.62);
+    border-color: rgba(255, 255, 255, 0.78);
+    color: #114B40;
+}
+
+/* Top Sticky Header */
+body.theme-glass header {
+    background: var(--glass-header-bg);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow:
+        0 6px 24px -10px rgba(13, 62, 53, 0.11),
+        0 1px 0 rgba(15, 76, 65, 0.06),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.55);
+}
+
+body.theme-glass header #header-page-title {
+    color: #14362F;
+    letter-spacing: -0.01em;
+}
+
+body.theme-glass header #current-date-pill {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px -4px rgba(13, 62, 53, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: #2D403C;
+}
+
+body.theme-glass header #btn-header-dokumen-bell {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px -4px rgba(13, 62, 53, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+}
+
+body.theme-glass header #btn-header-dokumen-bell:hover {
+    background: rgba(235, 248, 244, 0.92);
+    border-color: rgba(27, 115, 97, 0.30);
+    transform: translateY(-1px);
+}
+
+body.theme-glass header button[title="Sinkronisasi Data Supabase"] {
+    background: rgba(27, 115, 97, 0.12);
+    border: 1px solid rgba(27, 115, 97, 0.22);
+    box-shadow: 0 2px 8px -4px rgba(27, 115, 97, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    transition: all 0.2s ease;
+}
+
+body.theme-glass header button[title="Sinkronisasi Data Supabase"]:hover {
+    background: var(--glass-primary-grad);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    box-shadow: var(--glass-primary-shadow);
+    transform: translateY(-1px);
+}
+
+/* =========================================================================
+ * 3. GLASS CARDS, TOOLBARS, KPI CARDS & NESTED STAT TILES
+ * ========================================================================= */
+body.theme-glass main div.bg-white.rounded-xl:not([data-cal-day]),
+body.theme-glass main div.bg-white.rounded-2xl:not([data-cal-day]),
+body.theme-glass main aside.bg-white.rounded-xl,
+body.theme-glass main #roster-info-panel {
+    background: var(--glass-card-bg);
+    backdrop-filter: var(--glass-blur-md);
+    -webkit-backdrop-filter: var(--glass-blur-md);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow-card);
+    border-radius: 1rem;
+}
+
+/* Roster Personal Calendar DWS Day Cells (Crisp Frosted White without Redundant Nested Blur) */
+body.theme-glass #roster-personal-calendar-grid [data-cal-day].bg-white {
+    background: rgba(255, 255, 255, 0.86);
+    border-color: rgba(15, 76, 65, 0.18);
+    box-shadow: 0 3px 10px -6px rgba(13, 62, 53, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Interactive Card Hover Lift (KPI Cards & Pengawas Summary Tiles) */
+body.theme-glass #sub-kpi-se > .grid > div.bg-white.rounded-xl {
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+
+body.theme-glass #sub-kpi-se > .grid > div.bg-white.rounded-xl:hover {
+    background: var(--glass-card-bg-hover);
+    border-color: rgba(27, 115, 97, 0.34);
+    box-shadow: var(--glass-shadow-card-hover);
+    transform: translateY(-2px);
+}
+
+/* Gem-like Translucent Icon Badges inside KPI Cards */
+body.theme-glass #sub-kpi-se .w-11.h-11.rounded-xl {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow: 0 6px 14px -6px rgba(15, 76, 65, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Nested Sub-cards / Mini Stat Tiles inside Glass Cards */
+body.theme-glass main div.rounded-xl.bg-gray-50,
+body.theme-glass main div.rounded-xl.bg-teal-50,
+body.theme-glass main div.rounded-xl.bg-teal-50\/60 {
+    background: rgba(255, 255, 255, 0.50);
+    border-color: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 4px 14px -8px rgba(13, 62, 53, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+body.theme-glass main div.rounded-xl.bg-teal-50,
+body.theme-glass main div.rounded-xl.bg-teal-50\/60 {
+    background: linear-gradient(135deg, rgba(213, 238, 230, 0.62) 0%, rgba(238, 250, 246, 0.48) 100%);
+    border-color: rgba(123, 184, 164, 0.42);
+}
+
+/* Warning / Info Alert Banners (Glass Tinted) */
+body.theme-glass main div.bg-amber-50.rounded-xl {
+    background: linear-gradient(135deg, rgba(255, 247, 224, 0.76) 0%, rgba(254, 243, 199, 0.58) 100%);
+    backdrop-filter: var(--glass-blur-md);
+    -webkit-backdrop-filter: var(--glass-blur-md);
+    border-color: rgba(251, 191, 36, 0.45);
+    box-shadow: 0 10px 26px -12px rgba(180, 83, 9, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Inner Dividers & Sub-headers inside Glass Cards */
+body.theme-glass main .border-gray-100,
+body.theme-glass main .border-gray-200 {
+    border-color: var(--glass-divider);
+}
+
+body.theme-glass main .bg-gray-50\/70,
+body.theme-glass main .bg-gray-50\/80,
+body.theme-glass main .bg-gray-50\/40,
+body.theme-glass main .bg-gray-50\/30 {
+    background-color: rgba(242, 248, 246, 0.46);
+}
+
+/* Beranda Informasi & Ruang Obrolan — Seamless Inner Surface */
+body.theme-glass #informasi-feed-view > div,
+body.theme-glass #informasi-list-container,
+body.theme-glass #informasi-chat-view > div.bg-white {
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+body.theme-glass #informasi-list-container > article.bg-white {
+    background: rgba(255, 255, 255, 0.26);
+    transition: background-color 0.18s ease;
+}
+
+body.theme-glass #informasi-list-container > article.bg-white:hover {
+    background: rgba(255, 255, 255, 0.56);
+}
+
+body.theme-glass #info-chat-messages {
+    background: rgba(235, 244, 242, 0.38);
+}
+
+body.theme-glass #info-chat-messages [data-chat-side="left"] > div.rounded-2xl {
+    background: rgba(255, 255, 255, 0.84);
+    border-color: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 4px 12px -6px rgba(13, 62, 53, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+body.theme-glass #info-chat-messages [data-chat-side="right"] > div.rounded-2xl {
+    box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+/* Global Search Result Cards & Profile Section Cards */
+body.theme-glass #global-search-results button.bg-white,
+body.theme-glass #global-search-results div.bg-white,
+body.theme-glass #profil-content-host div.bg-white {
+    background: var(--glass-card-bg);
+    backdrop-filter: var(--glass-blur-sm);
+    -webkit-backdrop-filter: var(--glass-blur-sm);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow-card);
+}
+
+body.theme-glass #global-search-results button.bg-white:hover {
+    background: var(--glass-card-bg-hover);
+    border-color: var(--glass-border-teal);
+    transform: translateY(-1px);
+}
+
+/* Profile Hero Card — Luminous Emerald Glass Gradient */
+body.theme-glass #profil-content-host > div > .bg-gradient-to-br,
+body.theme-glass #profil-content-host .bg-gradient-to-br {
+    box-shadow:
+        0 18px 40px -14px rgba(13, 74, 62, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.30);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+/* Roster Info Slide Handle */
+body.theme-glass #roster-info-slide-handle {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: var(--glass-blur-sm);
+    -webkit-backdrop-filter: var(--glass-blur-sm);
+    border-color: var(--glass-border);
+    box-shadow: -4px 4px 16px -6px rgba(13, 62, 53, 0.14);
+}
+
+/* =========================================================================
+ * 4. TABLES, STICKY COLUMNS & ROSTER COLOR PRESERVATION
+ * ========================================================================= */
+body.theme-glass main :where(table) {
+    background: transparent;
+}
+
+body.theme-glass main :where(table) th,
+body.theme-glass main :where(table) td {
+    border-bottom-color: rgba(15, 76, 65, 0.085);
+}
+
+body.theme-glass main :where(table) th:not(:last-child),
+body.theme-glass main :where(table) td:not(:last-child) {
+    border-right-color: rgba(15, 76, 65, 0.075);
+}
+
+/* Table Headers (Frosted Mist Tint) */
+body.theme-glass main table thead tr {
+    background: var(--glass-thead-bg);
+}
+
+body.theme-glass main table thead th {
+    color: #2E443F;
+    font-weight: 600;
+}
+
+body.theme-glass main table thead th:hover {
+    background-color: rgba(220, 236, 232, 0.85);
+}
+
+/* Regular Table Rows (Translucent Zebra — excludes Roster Shift Summary & Colored Cells) */
+body.theme-glass main table:not(#table-roster) tbody tr.bg-white {
+    background-color: var(--glass-row-bg);
+}
+
+body.theme-glass main table:not(#table-roster) tbody tr.bg-white:nth-child(even) {
+    background-color: var(--glass-row-alt-bg);
+}
+
+body.theme-glass main table:not(#table-roster) tbody tr.bg-white:hover,
+body.theme-glass main table:not(#table-roster) tbody tr.bg-white:nth-child(even):hover,
+body.theme-glass main table:not(#table-roster) tbody tr:hover {
+    background-color: var(--glass-row-hover-bg);
+}
+
+body.theme-glass main table:not(#table-roster) tbody tr:hover td.sticky,
+body.theme-glass main table:not(#table-roster) tbody tr:hover td[class*="sm:sticky"] {
+    background-color: rgba(233, 245, 241, 0.96);
+}
+
+/* Table Pagination Bar (app-operasional-se.js) */
+body.theme-glass main .table-pagination-bar {
+    background: rgba(242, 248, 246, 0.62);
+    border-top-color: var(--glass-divider);
+    backdrop-filter: var(--glass-blur-sm);
+    -webkit-backdrop-filter: var(--glass-blur-sm);
+}
+
+/* CRITICAL: High-Opacity Frosted Sticky Table Cells (No Horizontal Scroll Bleed) */
+body.theme-glass main table thead th.sticky,
+body.theme-glass main table thead th[class*="sm:sticky"] {
+    background-color: var(--glass-sticky-head-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+body.theme-glass main table tbody td.sticky.bg-white,
+body.theme-glass main table tbody td[class*="sm:sticky"].bg-white,
+body.theme-glass main table tfoot tr.roster-summary-s1 td.sticky,
+body.theme-glass main table tfoot tr.roster-summary-s1 td[class*="sm:sticky"] {
+    background-color: var(--glass-sticky-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+body.theme-glass main table tbody td.sticky.bg-gray-50,
+body.theme-glass main table tbody td[class*="sm:sticky"].bg-gray-50,
+body.theme-glass main table tbody td.sticky[class*="bg-gray-50/"],
+body.theme-glass main table tbody td[class*="sm:sticky"][class*="bg-gray-50/"] {
+    background-color: var(--glass-sticky-alt-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Keep Bulk-Selected Row Highlight Crisp */
+body.theme-glass main table tbody tr.\!bg-teal-50\/70,
+body.theme-glass main table tbody tr.\!bg-teal-50\/70 td.sticky,
+body.theme-glass main table tbody tr.\!bg-teal-50\/70 td[class*="sm:sticky"] {
+    background-color: rgba(213, 238, 230, 0.92) !important;
+}
+
+/* Keep Roster Day Cell Borders & Shift 2 Summary Crisp */
+body.theme-glass #roster-table-body td[id^="roster-day-cell-"] {
+    border-right: 1px solid rgba(15, 23, 42, 0.20);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.16);
+}
+
+/* =========================================================================
+ * 5. FORM CONTROLS, SEGMENTED TABS & GLASS BUTTONS
+ * ========================================================================= */
+/* Inputs, Selects, Textareas inside Main & Modals (exclude Roster inline grid inputs) */
+body.theme-glass input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.roster-grid-input),
+body.theme-glass select:not(.roster-grid-input),
+body.theme-glass textarea:not(.roster-grid-input) {
+    background-color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(15, 76, 65, 0.15);
+    color: var(--glass-text-primary);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(255, 255, 255, 0.75);
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+body.theme-glass input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.roster-grid-input):focus,
+body.theme-glass select:not(.roster-grid-input):focus,
+body.theme-glass textarea:not(.roster-grid-input):focus {
+    background-color: rgba(255, 255, 255, 0.96);
+    border-color: rgba(27, 115, 97, 0.55);
+    box-shadow: 0 0 0 3px rgba(27, 115, 97, 0.14), 0 2px 8px -2px rgba(13, 62, 53, 0.10);
+}
+
+/* Period Box inline selects stay transparent */
+body.theme-glass .bg-gray-50 select.bg-transparent,
+body.theme-glass #mob-filter-sheet-body .mob-flt-period-box select {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Segmented Control Tracks (Recessed Etched Glass) */
+body.theme-glass .inline-flex.rounded-xl.bg-gray-100,
+body.theme-glass .grid.rounded-xl.bg-gray-100,
+body.theme-glass #mp-detail-tab-switcher > div.grid {
+    background: rgba(15, 76, 65, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: inset 0 1px 3px rgba(13, 62, 53, 0.08);
+}
+
+/* Active Segmented Tab Pill (Glossy Elevated Crystal) */
+body.theme-glass .inline-flex.rounded-xl.bg-gray-100 > button.bg-white,
+body.theme-glass .grid.rounded-xl.bg-gray-100 > button.bg-white,
+body.theme-glass #mp-detail-tab-switcher button.bg-white {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 12px -4px rgba(13, 62, 53, 0.18), inset 0 1px 0 rgba(255, 255, 255, 1);
+    color: #135A4C;
+}
+
+/* Primary Teal Buttons (Glossy Emerald Glass) */
+body.theme-glass button.bg-teal-500:not(:disabled),
+body.theme-glass button.bg-teal-600:not(:disabled) {
+    background-image: var(--glass-primary-grad);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: var(--glass-primary-shadow);
+    transition: transform 0.16s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+body.theme-glass button.bg-teal-500:not(:disabled):hover,
+body.theme-glass button.bg-teal-600:not(:disabled):hover {
+    background-image: var(--glass-primary-grad-hover);
+    box-shadow: 0 10px 24px -6px rgba(27, 115, 97, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    transform: translateY(-0.5px);
+}
+
+body.theme-glass button.bg-teal-500:not(:disabled):active,
+body.theme-glass button.bg-teal-600:not(:disabled):active {
+    transform: translateY(0) scale(0.985);
+}
+
+/* Secondary White Buttons (Frosted Glass Pill) */
+body.theme-glass button.bg-white.border,
+body.theme-glass a.bg-white.border {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(15, 76, 65, 0.14);
+    box-shadow: 0 2px 8px -4px rgba(13, 62, 53, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.16s ease;
+}
+
+body.theme-glass button.bg-white.border:hover,
+body.theme-glass a.bg-white.border:hover {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(27, 115, 97, 0.30);
+    box-shadow: 0 6px 14px -6px rgba(13, 62, 53, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.98);
+}
+
+/* =========================================================================
+ * 6. MODALS, SLIDE DRAWERS, POPOVERS & TOAST NOTIFICATIONS
+ * ========================================================================= */
+/* Modal Backdrops */
+body.theme-glass div[id^="modal-"].fixed.inset-0 {
+    background-color: rgba(11, 34, 30, 0.36);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+body.theme-glass #modal-punishment-eviden-preview.fixed.inset-0 {
+    background-color: rgba(9, 24, 21, 0.68);
+}
+
+/* Modal Dialog Glass Panels */
+body.theme-glass div[id^="modal-"].fixed.inset-0 > div.bg-white {
+    background: var(--glass-modal-bg);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    box-shadow: var(--glass-shadow-modal);
+    border-radius: 1.25rem;
+}
+
+/* Modal Inner Chrome */
+body.theme-glass div[id^="modal-"] .border-gray-100,
+body.theme-glass div[id^="modal-"] .border-gray-200 {
+    border-color: rgba(15, 76, 65, 0.10);
+}
+
+body.theme-glass div[id^="modal-"] #mp-detail-tab-switcher {
+    background: rgba(239, 247, 245, 0.65);
+    border-bottom-color: rgba(15, 76, 65, 0.10);
+}
+
+body.theme-glass div[id^="modal-"] #manpower-detail-panel {
+    background: rgba(238, 246, 244, 0.48);
+}
+
+body.theme-glass div[id^="modal-"] #manpower-detail-panel > div.bg-white {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 6px 18px -10px rgba(13, 62, 53, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+body.theme-glass div[id^="modal-"] .bg-gray-50\/60,
+body.theme-glass div[id^="modal-"] .bg-gray-50\/70 {
+    background: rgba(241, 247, 245, 0.58);
+}
+
+/* Emoji Popover in Beranda */
+body.theme-glass .info-emoji-popover {
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: var(--glass-blur-md);
+    -webkit-backdrop-filter: var(--glass-blur-md);
+    border-color: rgba(255, 255, 255, 0.88);
+    box-shadow: var(--glass-shadow-card-hover);
+}
+
+/* Mobile Floating Bottom Pill Dock (20% Lebih Ringkas + Transparan Glossy saat Scroll) */
+body.theme-glass #mobile-bottom-nav #mobile-bottom-nav-dock {
+    width: min(76vw, 356px);
+    min-width: 266px;
+    max-width: 356px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(246, 252, 250, 0.56) 100%);
+    backdrop-filter: blur(18px) saturate(185%);
+    -webkit-backdrop-filter: blur(18px) saturate(185%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow:
+        0 12px 30px -8px rgba(13, 68, 58, 0.22),
+        0 2px 8px -2px rgba(15, 23, 42, 0.08),
+        inset 0 1.5px 1px rgba(255, 255, 255, 0.94),
+        inset 0 -1px 2px rgba(15, 76, 65, 0.06);
+    transition:
+        background 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        backdrop-filter 0.28s ease,
+        -webkit-backdrop-filter 0.28s ease,
+        border-color 0.28s ease,
+        box-shadow 0.28s ease,
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Proporsi khusus mode 4 ikon (Role Karyawan) agar tetap ringkas & simetris */
+body.theme-glass #mobile-bottom-nav #mobile-bottom-nav-dock.is-4-cols {
+    width: min(66vw, 296px);
+    min-width: 230px;
+    max-width: 296px;
+}
+
+/* Lapisan Kilap Glossy (Specular Top Reflection) */
+body.theme-glass #mobile-bottom-nav #mobile-bottom-nav-dock::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px auto 1px;
+    height: 52%;
+    border-radius: 9999px 9999px 48% 48%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.14) 70%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+    transition: opacity 0.28s ease;
+}
+
+/* Mode Transparan Glossy Liquid-Glass saat Isi Menu Di-Scroll */
+body.theme-glass #mobile-bottom-nav.is-scrolled #mobile-bottom-nav-dock {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.42) 0%,
+        rgba(255, 255, 255, 0.16) 48%,
+        rgba(232, 247, 243, 0.24) 100%
+    );
+    backdrop-filter: blur(11px) saturate(215%) brightness(1.05);
+    -webkit-backdrop-filter: blur(11px) saturate(215%) brightness(1.05);
+    border-color: rgba(255, 255, 255, 0.76);
+    box-shadow:
+        0 14px 34px -8px rgba(10, 56, 48, 0.28),
+        0 3px 10px -2px rgba(15, 23, 42, 0.10),
+        inset 0 1.5px 1px rgba(255, 255, 255, 0.96),
+        inset 0 -1.5px 3px rgba(15, 76, 65, 0.11),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.48);
+}
+
+body.theme-glass #mobile-bottom-nav.is-scrolled #mobile-bottom-nav-dock::before {
+    opacity: 0.95;
+}
+
+/* Kapsul Tombol Aktif Emerald Glossy */
+body.theme-glass #mobile-bottom-nav .mob-nav-btn.is-active {
+    background: linear-gradient(180deg, rgba(35, 146, 123, 0.94) 0%, rgba(18, 96, 80, 0.96) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow:
+        0 6px 16px -4px rgba(15, 86, 72, 0.45),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.40),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-glass #mobile-bottom-nav.is-scrolled .mob-nav-btn.is-active {
+    background: linear-gradient(180deg, rgba(35, 150, 126, 0.86) 0%, rgba(17, 94, 78, 0.88) 100%);
+    border-color: rgba(255, 255, 255, 0.36);
+    box-shadow:
+        0 8px 18px -4px rgba(13, 76, 64, 0.46),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.48);
+}
+
+/* Kontras Ikon & Label Non-Aktif agar Tetap Tajam di Atas Kaca Transparan */
+body.theme-glass #mobile-bottom-nav.is-scrolled .mob-nav-btn:not(.is-active) .mob-nav-icon {
+    color: #25403A;
+    filter: drop-shadow(0 1px 4px rgba(255, 255, 255, 0.8));
+}
+
+body.theme-glass #mobile-bottom-nav.is-scrolled .mob-nav-btn:not(.is-active) .mob-nav-label {
+    color: #1D332E;
+    text-shadow: 0 1px 5px rgba(255, 255, 255, 0.88);
+}
+
+body.theme-glass #mobile-bottom-nav .mob-nav-btn:not(.is-active):hover {
+    background: rgba(255, 255, 255, 0.42);
+}
+
+/* Mobile Slide-Over Drawers (Submenu & Filter Sheet) */
+body.theme-glass #mobile-submenu-drawer,
+body.theme-glass #mob-filter-sheet-portal {
+    background-color: rgba(11, 34, 30, 0.36);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+body.theme-glass #mobile-submenu-drawer-panel,
+body.theme-glass #mob-filter-sheet-panel {
+    background: var(--glass-drawer-bg);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border-left: 1px solid rgba(255, 255, 255, 0.88);
+    box-shadow: -12px 0 40px -12px rgba(10, 44, 38, 0.25);
+}
+
+body.theme-glass #mobile-submenu-drawer-panel > div:first-child,
+body.theme-glass #mob-filter-sheet-panel > div:first-child,
+body.theme-glass #mob-filter-sheet-panel > div:last-child {
+    background: rgba(240, 248, 246, 0.62);
+    border-color: var(--glass-divider);
+}
+
+/* Mobile Filter Inputs inside Glass Drawer */
+@media (max-width: 1023px) {
+    body.theme-glass #mob-filter-sheet-body select,
+    body.theme-glass #mob-filter-sheet-body input[type="date"],
+    body.theme-glass #mob-filter-sheet-body .mob-flt-period-box {
+        background-color: rgba(255, 255, 255, 0.78) !important;
+        border: 1px solid rgba(15, 76, 65, 0.16) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+    }
+
+    body.theme-glass .mob-act-toggle {
+        background: var(--glass-primary-grad);
+        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: var(--glass-primary-shadow);
+    }
+
+    body.theme-glass .mob-act-wrap.is-open .mob-act-toggle {
+        background: rgba(255, 255, 255, 0.82);
+        border-color: rgba(27, 115, 97, 0.30);
+        backdrop-filter: var(--glass-blur-sm);
+        -webkit-backdrop-filter: var(--glass-blur-sm);
+    }
+}
+
+/* Toast Notifications (Translucent Status Glass Pills) */
+body.theme-glass #toast-container > div {
+    backdrop-filter: blur(16px) saturate(165%);
+    -webkit-backdrop-filter: blur(16px) saturate(165%);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    box-shadow: 0 14px 32px -10px rgba(10, 38, 32, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+body.theme-glass #toast-container > div.bg-emerald-600 {
+    background-color: rgba(16, 134, 102, 0.86);
+}
+
+body.theme-glass #toast-container > div.bg-red-600 {
+    background-color: rgba(205, 46, 56, 0.88);
+}
+
+body.theme-glass #toast-container > div.bg-gray-800 {
+    background-color: rgba(22, 42, 38, 0.86);
+}
+
+/* =========================================================================
+ * 7. LOGIN & RESET PASSWORD GLASS PORTAL (#pantau-auth-screen)
+ * ========================================================================= */
+body.theme-glass #pantau-auth-screen {
+    background:
+        radial-gradient(ellipse 58% 55% at 14% 16%, rgba(27, 115, 97, 0.30) 0%, rgba(27, 115, 97, 0) 68%),
+        radial-gradient(ellipse 50% 50% at 86% 18%, rgba(56, 189, 248, 0.26) 0%, rgba(56, 189, 248, 0) 68%),
+        radial-gradient(ellipse 54% 52% at 20% 88%, rgba(234, 179, 108, 0.24) 0%, rgba(234, 179, 108, 0) 68%),
+        radial-gradient(ellipse 50% 50% at 84% 85%, rgba(20, 148, 124, 0.25) 0%, rgba(20, 148, 124, 0) 68%),
+        linear-gradient(135deg, #E5F1EE 0%, #F2F7F6 48%, #E4EFF3 100%);
+}
+
+body.theme-glass #pantau-auth-screen #auth-card-shell {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(248, 252, 251, 0.56) 100%);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.86);
+    box-shadow:
+        0 30px 72px -18px rgba(13, 68, 58, 0.26),
+        0 8px 24px -8px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+body.theme-glass #pantau-auth-screen #auth-hero-col {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.45) 0%, rgba(232, 244, 240, 0.36) 100%);
+}
+
+body.theme-glass #pantau-auth-screen #auth-form-col {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.42) 100%);
+}
+
+@media (min-width: 768px) {
+    body.theme-glass #pantau-auth-screen #auth-hero-col {
+        border-right: 1px solid rgba(255, 255, 255, 0.68);
+    }
+}
+
+@media (max-width: 767px) {
+    body.theme-glass #pantau-auth-screen #auth-card-shell {
+        border: 0;
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        box-shadow: none;
+    }
+
+    body.theme-glass #pantau-auth-screen #auth-hero-col {
+        background: transparent;
+    }
+
+    body.theme-glass #pantau-auth-screen #auth-hero-image {
+        border-radius: 1.5rem;
+        box-shadow: 0 18px 36px -14px rgba(13, 68, 58, 0.24);
+        border: 1px solid rgba(255, 255, 255, 0.78);
+    }
+
+    body.theme-glass #pantau-auth-screen #auth-form-col {
+        margin: 0 0.875rem 1rem;
+        width: auto;
+        border-radius: 1.75rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.75rem;
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 252, 251, 0.64) 100%);
+        backdrop-filter: blur(22px) saturate(175%);
+        -webkit-backdrop-filter: blur(22px) saturate(175%);
+        border: 1px solid rgba(255, 255, 255, 0.88);
+        box-shadow:
+            0 20px 48px -14px rgba(13, 68, 58, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 0.94);
+    }
+}
+
+/* =========================================================================
+ * 8. GRACEFUL FALLBACK & ACCESSIBILITY (Reduced Motion / No Backdrop Blur)
+ * ========================================================================= */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.theme-glass #desktop-sidebar,
+    body.theme-glass header,
+    body.theme-glass main div.bg-white.rounded-xl,
+    body.theme-glass main div.bg-white.rounded-2xl,
+    body.theme-glass main aside.bg-white.rounded-xl,
+    body.theme-glass div[id^="modal-"].fixed.inset-0 > div.bg-white,
+    body.theme-glass #mobile-bottom-nav #mobile-bottom-nav-dock,
+    body.theme-glass #mobile-bottom-nav.is-scrolled #mobile-bottom-nav-dock,
+    body.theme-glass #mobile-submenu-drawer-panel,
+    body.theme-glass #mob-filter-sheet-panel,
+    body.theme-glass #pantau-auth-screen #auth-card-shell {
+        background: rgba(252, 254, 253, 0.96);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.theme-glass #sub-kpi-se > .grid > div.bg-white.rounded-xl,
+    body.theme-glass #desktop-sidebar .nav-sidebar-item,
+    body.theme-glass button.bg-teal-500,
+    body.theme-glass button.bg-teal-600 {
+        transition: none !important;
+        transform: none !important;
+    }
+}

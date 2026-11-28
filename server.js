@@ -72,7 +72,7 @@ function getCacheHeader(filePath) {
   if (base === 'sw.js') {
     return 'no-cache, no-store, must-revalidate';
   }
-  if (ext === '.html' || ext === '.js' || base === 'manifest.json') {
+  if (ext === '.html' || ext === '.js' || ext === '.css' || base === 'manifest.json') {
     return 'no-cache';
   }
   return 'public, max-age=86400';

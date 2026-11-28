@@ -281,39 +281,41 @@ async function authenticatePantauCredentials(rawIdentity, rawPassword) {
         }
     }
 
-    // 2. Jika Supabase aktif, cek langsung data terbaru dari tabel `manpower`
-    let candidateList = getManpowerCandidatePool();
+    // 2. Jika Supabase aktif, cari HANYA 1 baris yang cocok (Mode Hemat Egress & Log Query)
+    let matchedMp = null;
     if (typeof isSupabaseConfigured === 'function' && isSupabaseConfigured() && typeof supabaseSelect === 'function') {
         try {
-            const remoteRows = await supabaseSelect('manpower', 'select=*&order=id.asc');
+            const safeVal = cleanIdentity.replace(/["\\]/g, '').trim();
+            const orFilter = `or=(nrp.ilike."${safeVal}",nama.ilike."${safeVal}",email.ilike."${safeVal}")`;
+            const remoteRows = await supabaseSelect(
+                'manpower',
+                `select=id,nrp,nama,jabatan,perusahaan,domisili,kontak,email,password&${encodeURI(orFilter)}&limit=1`
+            );
             if (Array.isArray(remoteRows) && remoteRows.length > 0) {
-                if (typeof manpowerState !== 'undefined') {
-                    manpowerState = remoteRows.map((r) => ({
-                        id: r.id, nrp: r.nrp, nama: r.nama, jabatan: r.jabatan || '',
-                        perusahaan: r.perusahaan || 'PPA', domisili: r.domisili || 'Mess',
-                        kontak: r.kontak || '', email: r.email || '',
-                        password: r.password || r.nrp || '',
-                        bapak_asuh: r.bapak_asuh || '',
-                        mcu_awal: r.mcu_awal || '', mcu_ulang: r.mcu_ulang || '',
-                        atr: Number(r.atr ?? 100),
-                        docs: (r.docs && typeof r.docs === 'object') ? r.docs : {},
-                        media_links: (r.media_links && typeof r.media_links === 'object') ? r.media_links : {}
-                    }));
-                }
-                candidateList = getManpowerCandidatePool();
+                const r = remoteRows[0];
+                const overridePwd = getPasswordOverridesMap()[String(r.nrp || '').trim().toLowerCase()];
+                matchedMp = {
+                    id: r.id, nrp: r.nrp, nama: r.nama, jabatan: r.jabatan || '',
+                    perusahaan: r.perusahaan || 'PPA', domisili: r.domisili || 'Mess',
+                    kontak: r.kontak || '', email: r.email || '',
+                    password: overridePwd || r.password || r.nrp || ''
+                };
             }
         } catch (err) {
             console.warn('Cek login ke Supabase gagal, menggunakan data manpower lokal:', err);
         }
     }
 
-    // 3. Cocokkan dengan NRP, Nama Lengkap, atau Email di data Manpower
-    const matchedMp = candidateList.find((mp) => {
-        const nrp = String(mp.nrp || '').trim().toLowerCase();
-        const nama = String(mp.nama || '').trim().toLowerCase();
-        const email = String(mp.email || '').trim().toLowerCase();
-        return identityLower === nrp || identityLower === nama || (email && identityLower === email);
-    });
+    // 3. Fallback cocokkan ke pool lokal bila offline / belum ditemukan di query remote
+    if (!matchedMp) {
+        const candidateList = getManpowerCandidatePool();
+        matchedMp = candidateList.find((mp) => {
+            const nrp = String(mp.nrp || '').trim().toLowerCase();
+            const nama = String(mp.nama || '').trim().toLowerCase();
+            const email = String(mp.email || '').trim().toLowerCase();
+            return identityLower === nrp || identityLower === nama || (email && identityLower === email);
+        });
+    }
 
     if (!matchedMp) {
         return { ok: false, error: 'NRP / Username tidak ditemukan. Pastikan NRP terdaftar di Data Manpower.' };
@@ -370,6 +372,10 @@ function applyAuthenticatedSessionToApp(sessionObj) {
     if (typeof clearRosterPicUnlockedGrants === 'function') clearRosterPicUnlockedGrants();
     if (typeof applyRoleAccessAndNavigationUi === 'function') applyRoleAccessAndNavigationUi();
     if (typeof renderRosterTable === 'function') renderRosterTable();
+    // Jalankan sync hemat egress + Realtime WebSocket segera setelah sesi aktif
+    if (typeof bootstrapPantauCloudSync === 'function') {
+        bootstrapPantauCloudSync();
+    }
 }
 
 /* =====================================================================
@@ -743,31 +749,27 @@ async function handlePantauVerifyResetNrp(event) {
     if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>Mencari NRP...';
 
     try {
-        // Sinkronkan data manpower terbaru dari Supabase bila sudah dikonfigurasi
+        // Cari HANYA 1 baris manpower yang cocok dengan NRP (Mode Hemat Egress & Log Query)
+        let matched = null;
         if (typeof isSupabaseConfigured === 'function' && isSupabaseConfigured() && typeof supabaseSelect === 'function') {
             try {
-                const remoteRows = await supabaseSelect('manpower', 'select=*&order=id.asc');
-                if (Array.isArray(remoteRows) && remoteRows.length > 0 && typeof manpowerState !== 'undefined') {
-                    manpowerState = remoteRows.map((r) => ({
-                        id: r.id, nrp: r.nrp, nama: r.nama, jabatan: r.jabatan || '',
-                        perusahaan: r.perusahaan || 'PPA', domisili: r.domisili || 'Mess',
-                        kontak: r.kontak || '', email: r.email || '',
-                        password: r.password || r.nrp || '',
-                        bapak_asuh: r.bapak_asuh || '',
-                        mcu_awal: r.mcu_awal || '', mcu_ulang: r.mcu_ulang || '',
-                        atr: Number(r.atr ?? 100),
-                        docs: (r.docs && typeof r.docs === 'object') ? r.docs : {},
-                        media_links: (r.media_links && typeof r.media_links === 'object') ? r.media_links : {}
-                    }));
+                const remoteRows = await supabaseSelect(
+                    'manpower',
+                    `select=id,nrp,nama,jabatan,perusahaan,email&nrp=ilike.${encodeURIComponent(rawNrp)}&limit=1`
+                );
+                if (Array.isArray(remoteRows) && remoteRows.length > 0) {
+                    matched = remoteRows[0];
                 }
             } catch (_) {
                 /* fallback ke data manpower lokal */
             }
         }
 
-        const nrpLower = rawNrp.toLowerCase();
-        const candidateList = getManpowerCandidatePool();
-        const matched = candidateList.find((mp) => String(mp.nrp || '').trim().toLowerCase() === nrpLower);
+        if (!matched) {
+            const nrpLower = rawNrp.toLowerCase();
+            const candidateList = getManpowerCandidatePool();
+            matched = candidateList.find((mp) => String(mp.nrp || '').trim().toLowerCase() === nrpLower);
+        }
 
         if (!matched) {
             setPantauResetError(`NRP "${rawNrp}" tidak ditemukan di Data Manpower.`);
@@ -939,6 +941,7 @@ function confirmPantauLogout() {
             message: `Anda sedang masuk sebagai <strong>${escapeHtml(userName)}</strong>. Jika keluar, Anda perlu memasukkan NRP &amp; Password kembali untuk masuk.`,
             confirmText: 'Ya, Keluar',
             onConfirm: async () => {
+                if (typeof stopPantauSupabaseRealtime === 'function') stopPantauSupabaseRealtime();
                 if (typeof clearRosterPicUnlockedGrants === 'function') clearRosterPicUnlockedGrants();
                 await persistAuthSession(null);
                 showPantauLoginScreen();
@@ -948,6 +951,7 @@ function confirmPantauLogout() {
             }
         });
     } else {
+        if (typeof stopPantauSupabaseRealtime === 'function') stopPantauSupabaseRealtime();
         persistAuthSession(null).then(() => showPantauLoginScreen());
     }
 }

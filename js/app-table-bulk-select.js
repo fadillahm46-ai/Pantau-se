@@ -367,10 +367,18 @@ function executeBulkDeleteForTable(tableEl, selectedKeys) {
         }
         case 'performa-absensi-tbody': {
             const dateIso = document.getElementById('absensi-monitoring-date')?.value || getTodayISO();
+            const deletedKeys = [];
             numSet.forEach(mpId => {
                 const k = `${mpId}::${dateIso}`;
-                if (absensiRecordsState[k]) { delete absensiRecordsState[k]; deletedCount++; }
+                if (absensiRecordsState[k]) {
+                    delete absensiRecordsState[k];
+                    deletedKeys.push(k);
+                    deletedCount++;
+                }
             });
+            if (deletedKeys.length > 0 && typeof deleteAbsensiRecordsFromSupabase === 'function') {
+                deleteAbsensiRecordsFromSupabase(deletedKeys);
+            }
             if (deletedCount === 0) deletedCount = numSet.size;
             renderPerformaManpower();
             renderAbsensiMonthlyTable();
@@ -380,13 +388,18 @@ function executeBulkDeleteForTable(tableEl, selectedKeys) {
             const mIdx = parseInt(document.getElementById('absensi-monthly-month')?.value ?? String(new Date().getMonth()), 10);
             const yr = parseInt(document.getElementById('absensi-monthly-year')?.value || String(new Date().getFullYear()), 10);
             const ymPrefix = `${yr}-${String(mIdx + 1).padStart(2, '0')}-`;
+            const deletedKeys = [];
             Object.keys(absensiRecordsState).forEach(k => {
                 const [idPart, dtPart] = k.split('::');
                 if (numSet.has(Number(idPart)) && dtPart && dtPart.startsWith(ymPrefix)) {
                     delete absensiRecordsState[k];
+                    deletedKeys.push(k);
                     deletedCount++;
                 }
             });
+            if (deletedKeys.length > 0 && typeof deleteAbsensiRecordsFromSupabase === 'function') {
+                deleteAbsensiRecordsFromSupabase(deletedKeys);
+            }
             if (deletedCount === 0) deletedCount = numSet.size;
             renderAbsensiMonthlyTable();
             renderPerformaManpower();

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -104,19 +104,19 @@
     <!-- SheetJS + Styling (xlsx-js-style) via CDN untuk Download Excel Berwarna & Import Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
-    <!-- Tema Soft Warm Ivory (#F7F4EF — 40% lebih ringan) & grid garis samar seragam -->
+    <!-- Tema Frosted Emerald Glassmorphism & utilitas dasar -->
     <style>
         :root {
-            --bg-linen: #F7F4EF;
-            --bg-sidebar: #F2EEE7;
-            --bg-card: #FCFAF7;
-            --border-warm: #E5DFD5;
+            --bg-linen: #EAF2F0;
+            --bg-sidebar: rgba(248, 252, 251, 0.68);
+            --bg-card: rgba(255, 255, 255, 0.72);
+            --border-warm: rgba(15, 76, 65, 0.12);
         }
 
         html,
         body {
-            background-color: #F7F4EF;
-            color: #2C2925;
+            background-color: #EAF2F0;
+            color: #1F2A28;
         }
 
         #desktop-sidebar .nav-sidebar-item:not(.bg-teal-500):hover,
@@ -471,10 +471,13 @@
             }
         }
     </style>
+
+    <!-- Stylesheet Tema Glassmorphism PANTAU SE -->
+    <link rel="stylesheet" href="css/glass-theme.css">
 </head>
 
 <body
-    class="bg-[#F7F4EF] text-gray-800 font-sans antialiased overflow-x-hidden selection:bg-teal-100 selection:text-teal-800">
+    class="theme-glass bg-[#EAF2F0] text-gray-800 font-sans antialiased overflow-x-hidden selection:bg-teal-100 selection:text-teal-800">
 
     <!-- ===================================================================== -->
     <!-- APP SHELL WRAPPER                                                     -->
@@ -1960,8 +1963,9 @@
                                     <select id="absensi-shift-filter" onchange="renderPerformaManpower()"
                                         class="rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white">
                                         <option value="all">Semua Shift</option>
-                                        <option value="S1">Shift 1</option>
-                                        <option value="S2">Shift 2</option>
+                                        <option value="S1">Shift 1 (Kode D)</option>
+                                        <option value="S2">Shift 2 (Kode N)</option>
+                                        <option value="-">Selain D / N (-)</option>
                                     </select>
                                 </div>
                                 <span id="absensi-today-date" class="text-[10px] text-teal-600 font-medium">-</span>
@@ -3901,11 +3905,11 @@
     <!-- 3. MOBILE BOTTOM NAVIGATION BAR (Floating Pill Dock — Dinamis per Role) -->
     <!-- ===================================================================== -->
     <nav id="mobile-bottom-nav"
-        class="lg:hidden fixed bottom-3 inset-x-2.5 sm:inset-x-4 z-30 pointer-events-none flex justify-center"
+        class="lg:hidden fixed bottom-3 inset-x-0 px-3 z-30 pointer-events-none flex justify-center"
         aria-label="Mobile Navigation">
-        <div
-            class="pointer-events-auto w-full max-w-[480px] bg-white/95 backdrop-blur-md border border-[#E5DFD5] rounded-full shadow-[0_10px_28px_-6px_rgba(15,76,65,0.22),0_2px_8px_rgba(0,0,0,0.06)] px-1.5 py-1.5">
-            <div id="mobile-bottom-nav-grid" class="grid grid-cols-5 items-center gap-1">
+        <div id="mobile-bottom-nav-dock"
+            class="pointer-events-auto relative overflow-hidden w-[76vw] min-w-[266px] max-w-[356px] bg-white/75 backdrop-blur-xl border border-white/80 rounded-full shadow-[0_10px_28px_-6px_rgba(15,76,65,0.22),0_2px_8px_rgba(0,0,0,0.06)] px-1 py-1">
+            <div id="mobile-bottom-nav-grid" class="relative z-[1] grid grid-cols-5 items-center gap-0.5">
                 <!-- Dirender dinamis sesuai 4 role oleh updateMobileNavigationUi() -->
             </div>
         </div>
@@ -5920,8 +5924,9 @@
                     </div>
                     <span id="absensi-raw-filename" class="text-xs font-bold text-teal-800">Pilih File Absensi (.xlsx,
                         .xls, .csv)</span>
+                    <span class="text-[10px] text-gray-500 leading-snug">Otomatis mengambil <strong>NRP</strong>, <strong>Date</strong>, <strong>In</strong>, &amp; <strong>Code</strong> (awalan <strong>D</strong> = Shift 1, <strong>N</strong> = Shift 2, selain itu <strong>-</strong>)</span>
                 </label>
-                <input id="absensi-raw-file" type="file" accept=".xlsx,.xls,.csv"
+                <input id="absensi-raw-file" type="file" accept=".xlsx,.xls,.csv,.tsv"
                     onchange="handleAbsensiRawFileUpload(event)" class="hidden">
 
                 <div id="absensi-upload-stats" class="hidden grid-cols-3 gap-2 text-center">

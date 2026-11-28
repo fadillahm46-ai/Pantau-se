@@ -649,6 +649,11 @@ function navigateTo(section, subSection = null) {
             : meta.title;
     }
     if (subEl) subEl.textContent = meta.subtitle;
+
+    // 7. Mode Hemat Egress: lazy-sync data grup section hanya saat dibuka
+    if (typeof ensureSectionSyncedFromSupabase === 'function') {
+        ensureSectionSyncedFromSupabase(section, currentSubSection);
+    }
 }
 /* =====================================================================
  * 2. CHART.JS (BIG CRANE DONUT & BOOKING/KPI LINE) & FILTER DASHBOARD
@@ -882,7 +887,7 @@ function initCharts() {
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { color: '#5A554D', usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 10 } }
+                        labels: { color: '#3B4F4B', usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 10 } }
                     }
                 }
             }
@@ -902,7 +907,7 @@ function initCharts() {
                         label: ds.actualLabel,
                         data: ds.actual,
                         borderColor: '#1B7361',
-                        backgroundColor: 'rgba(27, 115, 97, 0.14)',
+                        backgroundColor: 'rgba(27, 115, 97, 0.16)',
                         fill: true,
                         tension: 0.35,
                         borderWidth: 2.5,
@@ -912,7 +917,7 @@ function initCharts() {
                     {
                         label: ds.targetLabel,
                         data: ds.target,
-                        borderColor: '#9E978D',
+                        borderColor: '#7A908B',
                         borderDash: [5, 5],
                         fill: false,
                         tension: 0.1,
@@ -929,12 +934,12 @@ function initCharts() {
                     legend: {
                         position: 'top',
                         align: 'end',
-                        labels: { color: '#5A554D', usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 10 } }
+                        labels: { color: '#3B4F4B', usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 10 } }
                     }
                 },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#F0ECE5' }, ticks: { color: '#5A554D', font: { family: 'Inter', size: 10 } } },
-                    x: { grid: { display: false }, ticks: { color: '#5A554D', font: { family: 'Inter', size: 10 } } }
+                    y: { beginAtZero: true, grid: { color: 'rgba(15, 76, 65, 0.08)' }, ticks: { color: '#4E5E5A', font: { family: 'Inter', size: 10 } } },
+                    x: { grid: { display: false }, ticks: { color: '#4E5E5A', font: { family: 'Inter', size: 10 } } }
                 }
             }
         });
